@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 
 /// Individual conversation screen with messages
 class ConversationScreen extends StatefulWidget {
@@ -20,36 +21,41 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
             CircleAvatar(
-              radius: 18,
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              radius: AppAvatarSize.md / 2,
+              backgroundColor: colorScheme.primaryContainer,
               child: Text(
                 '대',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  fontSize: 12,
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onPrimaryContainer,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '대화 상대 ${widget.conversationId}',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                Text(
-                  '마지막 접속: 1시간 전',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
+            AppSpacing.horizontalSm,
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '대화 상대 ${widget.conversationId}',
+                    style: textTheme.titleMedium,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    '마지막 접속: 1시간 전',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -57,7 +63,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
           IconButton(
             icon: Icon(
               _isFavorite ? Icons.star : Icons.star_border,
-              color: _isFavorite ? Colors.amber : null,
+              color: _isFavorite ? AppColors.warning : null,
             ),
             onPressed: () {
               setState(() {
@@ -86,33 +92,33 @@ class _ConversationScreenState extends State<ConversationScreen> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'block',
                 child: Row(
                   children: [
-                    Icon(Icons.block),
-                    SizedBox(width: 12),
-                    Text('차단하기'),
+                    const Icon(Icons.block),
+                    AppSpacing.horizontalSm,
+                    const Text('차단하기'),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'report',
                 child: Row(
                   children: [
-                    Icon(Icons.flag),
-                    SizedBox(width: 12),
-                    Text('신고하기'),
+                    const Icon(Icons.flag),
+                    AppSpacing.horizontalSm,
+                    const Text('신고하기'),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
                 child: Row(
                   children: [
-                    Icon(Icons.delete),
-                    SizedBox(width: 12),
-                    Text('대화 삭제'),
+                    const Icon(Icons.delete),
+                    AppSpacing.horizontalSm,
+                    const Text('대화 삭제'),
                   ],
                 ),
               ),
@@ -126,7 +132,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
           Expanded(
             child: ListView.builder(
               reverse: true,
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.screenPadding,
               itemCount: 10, // TODO: Replace with actual messages
               itemBuilder: (context, index) {
                 final isMe = index % 2 == 0;
@@ -145,12 +151,12 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
           // Recording bar
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.screenPadding,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
+              color: colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: colorScheme.shadow.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),
@@ -161,23 +167,23 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 children: [
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(24),
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(AppRadius.xxl),
                       ),
                       child: Text(
                         _isRecording ? '녹음 중...' : '길게 눌러서 녹음',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  AppSpacing.horizontalSm,
                   GestureDetector(
                     onLongPressStart: (_) {
                       setState(() => _isRecording = true);
@@ -188,18 +194,18 @@ class _ConversationScreenState extends State<ConversationScreen> {
                       // TODO: Stop recording and send
                     },
                     child: Container(
-                      width: 56,
-                      height: 56,
+                      width: AppIconSize.xxl + AppSpacing.xs,
+                      height: AppIconSize.xxl + AppSpacing.xs,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _isRecording
-                            ? Theme.of(context).colorScheme.error
-                            : Theme.of(context).colorScheme.primary,
+                            ? colorScheme.error
+                            : colorScheme.primary,
                       ),
                       child: Icon(
                         Icons.mic,
-                        color: Colors.white,
-                        size: _isRecording ? 28 : 24,
+                        color: colorScheme.onPrimary,
+                        size: _isRecording ? AppIconSize.xl - 4 : AppIconSize.lg,
                       ),
                     ),
                   ),
@@ -213,6 +219,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
   }
 
   void _showBlockDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -233,7 +241,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
             },
             child: Text(
               '차단',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: TextStyle(color: colorScheme.error),
             ),
           ),
         ],
@@ -242,6 +250,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
   }
 
   void _showDeleteDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -260,7 +270,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
             },
             child: Text(
               '삭제',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: TextStyle(color: colorScheme.error),
             ),
           ),
         ],
@@ -286,96 +296,100 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
         mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           if (!isMe) ...[
             CircleAvatar(
-              radius: 16,
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              radius: AppAvatarSize.sm / 2,
+              backgroundColor: colorScheme.primaryContainer,
               child: Text(
                 '대',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onPrimaryContainer,
                   fontSize: 10,
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            AppSpacing.horizontalXs,
           ],
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.65,
-            ),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isMe
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isMe ? 16 : 4),
-                bottomRight: Radius.circular(isMe ? 4 : 16),
+          Flexible(
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.65,
               ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: onPlay,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isMe
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                    ),
-                    child: Icon(
-                      isPlaying ? Icons.pause : Icons.play_arrow,
-                      color: isMe ? Colors.white : Theme.of(context).colorScheme.primary,
-                      size: 20,
+              padding: EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: isMe
+                    ? colorScheme.primary
+                    : colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(AppRadius.lg),
+                  topRight: Radius.circular(AppRadius.lg),
+                  bottomLeft: Radius.circular(isMe ? AppRadius.lg : AppRadius.xs),
+                  bottomRight: Radius.circular(isMe ? AppRadius.xs : AppRadius.lg),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: onPlay,
+                    child: Container(
+                      width: AppIconSize.xl + AppSpacing.xxs,
+                      height: AppIconSize.xl + AppSpacing.xxs,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isMe
+                            ? colorScheme.onPrimary.withValues(alpha: 0.2)
+                            : colorScheme.primary.withValues(alpha: 0.1),
+                      ),
+                      child: Icon(
+                        isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: isMe ? colorScheme.onPrimary : colorScheme.primary,
+                        size: AppIconSize.md,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '음성 메시지',
-                      style: TextStyle(
-                        color: isMe
-                            ? Colors.white
-                            : Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.w500,
+                  AppSpacing.horizontalSm,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '음성 메시지',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: isMe
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$duration초',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isMe
-                            ? Colors.white.withValues(alpha: 0.7)
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      AppSpacing.verticalXxs,
+                      Text(
+                        '$duration초',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: isMe
+                              ? colorScheme.onPrimary.withValues(alpha: 0.7)
+                              : colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: 8),
+          AppSpacing.horizontalXs,
           Text(
             time,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

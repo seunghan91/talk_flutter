@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/domain/entities/user.dart';
 import 'package:talk_flutter/domain/repositories/user_repository.dart';
 import 'package:talk_flutter/presentation/blocs/user/user_bloc.dart';
@@ -113,204 +114,210 @@ class _ReportUserScreenState extends State<ReportUserScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('사용자 신고'),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Reported user info
-                  if (_reportedUser != null)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.primaryContainer,
-                              child: Text(
-                                _reportedUser!.nickname.substring(0, 1).toUpperCase(),
-                                style: TextStyle(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onPrimaryContainer,
-                                  fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: AppSpacing.screenPadding,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Reported user info
+                    if (_reportedUser != null)
+                      Card(
+                        child: Padding(
+                          padding: AppSpacing.cardPadding,
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: AppAvatarSize.sm,
+                                backgroundColor: colorScheme.primaryContainer,
+                                child: Text(
+                                  _reportedUser!.nickname.substring(0, 1).toUpperCase(),
+                                  style: TextStyle(
+                                    color: colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '신고 대상',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
-                                  ),
-                                  Text(
-                                    _reportedUser!.nickname,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.surfaceContainerHighest,
-                              child: const Icon(Icons.person),
-                            ),
-                            const SizedBox(width: 16),
-                            Text(
-                              '사용자 ID: ${widget.userId}',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 24),
-
-                  // Report reason selection
-                  Text(
-                    '신고 사유',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '해당하는 신고 사유를 선택해주세요.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Reason list
-                  Card(
-                    child: Column(
-                      children: _reportReasons.map((reason) {
-                        return RadioListTile<String>(
-                          title: Text(reason),
-                          value: reason,
-                          groupValue: _selectedReason,
-                          onChanged: (value) {
-                            setState(() => _selectedReason = value);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Additional details
-                  Text(
-                    '상세 내용 (선택)',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _detailController,
-                    maxLines: 4,
-                    maxLength: 500,
-                    decoration: const InputDecoration(
-                      hintText: '신고 내용을 자세히 설명해주세요.',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Warning message
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.warning_amber,
-                          size: 20,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            '허위 신고는 제재 대상이 될 수 있습니다. 신중하게 신고해주세요.',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.error,
+                              AppSpacing.horizontalMd,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '신고 대상',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: colorScheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                    Text(
+                                      _reportedUser!.nickname,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                  ],
                                 ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                      )
+                    else
+                      Card(
+                        child: Padding(
+                          padding: AppSpacing.cardPadding,
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: AppAvatarSize.sm,
+                                backgroundColor: colorScheme.surfaceContainerHighest,
+                                child: const Icon(Icons.person),
+                              ),
+                              AppSpacing.horizontalMd,
+                              Text(
+                                '사용자 ID: ${widget.userId}',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    AppSpacing.verticalXl,
 
-                  // Submit button
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _isSubmitting ? null : _submitReport,
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('신고하기'),
+                    // Report reason selection
+                    Text(
+                      '신고 사유',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    AppSpacing.verticalXs,
+                    Text(
+                      '해당하는 신고 사유를 선택해주세요.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                    AppSpacing.verticalMd,
 
-                  // Block option
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        _showBlockConfirmation();
-                      },
-                      icon: const Icon(Icons.block),
-                      label: const Text('이 사용자 차단하기'),
+                    // Reason list
+                    Card(
+                      child: Column(
+                        children: _reportReasons.map((reason) {
+                          return ListTile(
+                            title: Text(reason),
+                            // ignore: deprecated_member_use
+                            leading: Radio<String>(
+                              value: reason,
+                              // ignore: deprecated_member_use
+                              groupValue: _selectedReason,
+                              // ignore: deprecated_member_use
+                              onChanged: (value) {
+                                setState(() => _selectedReason = value);
+                              },
+                            ),
+                            onTap: () {
+                              setState(() => _selectedReason = reason);
+                            },
+                          );
+                        }).toList(),
+                      ),
                     ),
-                  ),
-                ],
+                    AppSpacing.verticalXl,
+
+                    // Additional details
+                    Text(
+                      '상세 내용 (선택)',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    AppSpacing.verticalXs,
+                    TextFormField(
+                      controller: _detailController,
+                      maxLines: 4,
+                      maxLength: 500,
+                      decoration: const InputDecoration(
+                        hintText: '신고 내용을 자세히 설명해주세요.',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    AppSpacing.verticalXl,
+
+                    // Warning message
+                    Container(
+                      padding: AppSpacing.cardPadding,
+                      decoration: BoxDecoration(
+                        color: colorScheme.errorContainer.withValues(alpha: 0.3),
+                        borderRadius: AppRadius.mediumRadius,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber,
+                            size: AppIconSize.md,
+                            color: colorScheme.error,
+                          ),
+                          AppSpacing.horizontalSm,
+                          Expanded(
+                            child: Text(
+                              '허위 신고는 제재 대상이 될 수 있습니다. 신중하게 신고해주세요.',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.error,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    AppSpacing.verticalXl,
+
+                    // Submit button
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: _isSubmitting ? null : _submitReport,
+                        child: _isSubmitting
+                            ? SizedBox(
+                                width: AppIconSize.md,
+                                height: AppIconSize.md,
+                                child: const CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('신고하기'),
+                      ),
+                    ),
+                    AppSpacing.verticalMd,
+
+                    // Block option
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          _showBlockConfirmation();
+                        },
+                        icon: const Icon(Icons.block),
+                        label: const Text('이 사용자 차단하기'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 

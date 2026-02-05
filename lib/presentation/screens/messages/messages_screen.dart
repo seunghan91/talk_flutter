@@ -28,60 +28,62 @@ class _MessagesScreenState extends State<MessagesScreen> {
       appBar: AppBar(
         title: const Text('메시지'),
       ),
-      body: BlocBuilder<ConversationBloc, ConversationState>(
-        builder: (context, state) {
-          // Loading state with skeleton
-          if (state.isLoading && state.conversations.isEmpty) {
-            return SkeletonList.conversations(count: 6);
-          }
+      body: SafeArea(
+        child: BlocBuilder<ConversationBloc, ConversationState>(
+          builder: (context, state) {
+            // Loading state with skeleton
+            if (state.isLoading && state.conversations.isEmpty) {
+              return SkeletonList.conversations(count: 6);
+            }
 
-          // Error state
-          if (state.status == ConversationStatus.error && state.conversations.isEmpty) {
-            return AppErrorState.generic(
-              message: state.errorMessage ?? '오류가 발생했습니다',
-              onRetry: () {
+            // Error state
+            if (state.status == ConversationStatus.error && state.conversations.isEmpty) {
+              return AppErrorState.generic(
+                message: state.errorMessage ?? '오류가 발생했습니다',
+                onRetry: () {
+                  context.read<ConversationBloc>().add(
+                    const ConversationListRequested(refresh: true),
+                  );
+                },
+              );
+            }
+
+            // Empty state with CTA
+            if (state.conversations.isEmpty) {
+              return AppEmptyState.noConversations(
+                onExplore: () => context.go('/'),
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
                 context.read<ConversationBloc>().add(
                   const ConversationListRequested(refresh: true),
                 );
               },
+              child: ListView.builder(
+                itemCount: state.conversations.length,
+                itemBuilder: (context, index) {
+                  final conversation = state.conversations[index];
+                  return _ConversationTile(
+                    conversation: conversation,
+                    onTap: () {
+                      context.push('/messages/${conversation.id}');
+                    },
+                    onToggleFavorite: () {
+                      context.read<ConversationBloc>().add(
+                        ConversationToggleFavorite(conversation.id),
+                      );
+                    },
+                    onDelete: () {
+                      _showDeleteConfirmation(context, conversation);
+                    },
+                  );
+                },
+              ),
             );
-          }
-
-          // Empty state with CTA
-          if (state.conversations.isEmpty) {
-            return AppEmptyState.noConversations(
-              onExplore: () => context.go('/'),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<ConversationBloc>().add(
-                const ConversationListRequested(refresh: true),
-              );
-            },
-            child: ListView.builder(
-              itemCount: state.conversations.length,
-              itemBuilder: (context, index) {
-                final conversation = state.conversations[index];
-                return _ConversationTile(
-                  conversation: conversation,
-                  onTap: () {
-                    context.push('/messages/${conversation.id}');
-                  },
-                  onToggleFavorite: () {
-                    context.read<ConversationBloc>().add(
-                      ConversationToggleFavorite(conversation.id),
-                    );
-                  },
-                  onDelete: () {
-                    _showDeleteConfirmation(context, conversation);
-                  },
-                );
-              },
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -130,16 +132,18 @@ class _ConversationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Dismissible(
       key: ValueKey(conversation.id),
       direction: DismissDirection.endToStart,
       background: Container(
-        color: Theme.of(context).colorScheme.error,
+        color: colorScheme.error,
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
+        padding: EdgeInsets.only(right: AppSpacing.lg),
         child: Icon(
           Icons.delete,
-          color: Theme.of(context).colorScheme.onError,
+          color: colorScheme.onError,
         ),
       ),
       confirmDismiss: (direction) async {
@@ -165,17 +169,17 @@ class _ConversationTile extends StatelessWidget {
           children: [
             Icon(
               Icons.mic,
-              size: 14,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              size: AppIconSize.xs,
+              color: colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(width: 4),
+            AppSpacing.horizontalXxs,
             Expanded(
               child: Text(
                 conversation.messagePreview,
                 style: TextStyle(
                   color: conversation.hasUnreadMessages
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurfaceVariant,
                   fontWeight: conversation.hasUnreadMessages
                       ? FontWeight.w500
                       : FontWeight.normal,
@@ -194,19 +198,19 @@ class _ConversationTile extends StatelessWidget {
               _formatDate(conversation.lastMessageAt ?? conversation.createdAt),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: conversation.hasUnreadMessages
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
                   ),
             ),
-            const SizedBox(height: 4),
+            AppSpacing.verticalXxs,
             GestureDetector(
               onTap: onToggleFavorite,
               child: Icon(
                 conversation.isFavorite ? Icons.star : Icons.star_border,
-                size: 20,
+                size: AppIconSize.md,
                 color: conversation.isFavorite
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
               ),
             ),
           ],

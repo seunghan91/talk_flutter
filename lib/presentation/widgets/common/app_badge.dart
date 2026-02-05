@@ -42,15 +42,22 @@ class AppBadge extends StatelessWidget {
 
     final effectiveTextColor = textColor ??
         (style == AppBadgeStyle.filled
-            ? Colors.white
+            ? theme.colorScheme.onPrimary
             : theme.colorScheme.onPrimaryContainer);
 
     final padding = switch (size) {
-      AppBadgeSize.small => const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      AppBadgeSize.medium =>
-        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      AppBadgeSize.large =>
-        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      AppBadgeSize.small => const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xxs + 2,
+          vertical: 2,
+        ),
+      AppBadgeSize.medium => const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: AppSpacing.xxs,
+        ),
+      AppBadgeSize.large => const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xxs + 2,
+        ),
     };
 
     final fontSize = switch (size) {
@@ -65,40 +72,45 @@ class AppBadge extends StatelessWidget {
       AppBadgeSize.large => 16.0,
     };
 
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: style == AppBadgeStyle.outlined ? Colors.transparent : effectiveBackgroundColor,
-        borderRadius: BorderRadius.circular(fontSize),
-        border: style == AppBadgeStyle.outlined
-            ? Border.all(color: effectiveBackgroundColor)
-            : null,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              size: iconSize,
-              color: style == AppBadgeStyle.outlined
-                  ? effectiveBackgroundColor
-                  : effectiveTextColor,
+    return Semantics(
+      label: text,
+      child: Container(
+        padding: padding,
+        decoration: BoxDecoration(
+          color: style == AppBadgeStyle.outlined
+              ? Colors.transparent
+              : effectiveBackgroundColor,
+          borderRadius: BorderRadius.circular(fontSize),
+          border: style == AppBadgeStyle.outlined
+              ? Border.all(color: effectiveBackgroundColor)
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: iconSize,
+                color: style == AppBadgeStyle.outlined
+                    ? effectiveBackgroundColor
+                    : effectiveTextColor,
+              ),
+              SizedBox(width: size == AppBadgeSize.small ? 2 : AppSpacing.xxs),
+            ],
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+                color: style == AppBadgeStyle.outlined
+                    ? effectiveBackgroundColor
+                    : effectiveTextColor,
+                height: 1,
+              ),
             ),
-            SizedBox(width: size == AppBadgeSize.small ? 2 : 4),
           ],
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w600,
-              color: style == AppBadgeStyle.outlined
-                  ? effectiveBackgroundColor
-                  : effectiveTextColor,
-              height: 1,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -229,12 +241,15 @@ class AppDotIndicator extends StatelessWidget {
     final theme = Theme.of(context);
     final effectiveColor = color ?? theme.colorScheme.primary;
 
-    Widget dot = Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: effectiveColor,
-        shape: BoxShape.circle,
+    Widget dot = Semantics(
+      label: '새 항목 표시',
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: effectiveColor,
+          shape: BoxShape.circle,
+        ),
       ),
     );
 
@@ -277,42 +292,45 @@ class _AnimatedDotState extends State<_AnimatedDot>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // Pulse ring
-            Transform.scale(
-              scale: 1.0 + (_controller.value * 0.5),
-              child: Opacity(
-                opacity: 1.0 - _controller.value,
-                child: Container(
-                  width: widget.size,
-                  height: widget.size,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: widget.color,
-                      width: 1,
+    return Semantics(
+      label: '새 항목 표시',
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              // Pulse ring
+              Transform.scale(
+                scale: 1.0 + (_controller.value * 0.5),
+                child: Opacity(
+                  opacity: 1.0 - _controller.value,
+                  child: Container(
+                    width: widget.size,
+                    height: widget.size,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: widget.color,
+                        width: 1,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            // Core dot
-            Container(
-              width: widget.size,
-              height: widget.size,
-              decoration: BoxDecoration(
-                color: widget.color,
-                shape: BoxShape.circle,
+              // Core dot
+              Container(
+                width: widget.size,
+                height: widget.size,
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/domain/entities/notification.dart';
 import 'package:talk_flutter/presentation/blocs/notification/notification_bloc.dart';
 import 'package:talk_flutter/presentation/blocs/notification/notification_event.dart';
@@ -22,6 +23,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('알림'),
@@ -41,67 +44,71 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ],
       ),
-      body: BlocConsumer<NotificationBloc, NotificationState>(
-        listener: (context, state) {
-          if (state.successMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.successMessage!)),
-            );
-          } else if (state.hasError && state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: Theme.of(context).colorScheme.error,
+      body: SafeArea(
+        child: BlocConsumer<NotificationBloc, NotificationState>(
+          listener: (context, state) {
+            if (state.successMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.successMessage!)),
+              );
+            } else if (state.hasError && state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: colorScheme.error,
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state.isLoading && state.notifications.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (!state.hasNotifications) {
+              return _buildEmptyState();
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<NotificationBloc>().add(const NotificationListRequested(refresh: true));
+              },
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                itemCount: state.notifications.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final notification = state.notifications[index];
+                  return _NotificationTile(
+                    notification: notification,
+                    onTap: () => _onNotificationTap(notification),
+                  );
+                },
               ),
             );
-          }
-        },
-        builder: (context, state) {
-          if (state.isLoading && state.notifications.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!state.hasNotifications) {
-            return _buildEmptyState();
-          }
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<NotificationBloc>().add(const NotificationListRequested(refresh: true));
-            },
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: state.notifications.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final notification = state.notifications[index];
-                return _NotificationTile(
-                  notification: notification,
-                  onTap: () => _onNotificationTap(notification),
-                );
-              },
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.notifications_off_outlined,
-            size: 64,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            size: AppIconSize.hero,
+            color: colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(height: 16),
+          AppSpacing.verticalMd,
           Text(
             '알림이 없습니다',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: colorScheme.onSurfaceVariant,
                 ),
           ),
         ],
@@ -140,16 +147,18 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: notification.isRead
-            ? Theme.of(context).colorScheme.surfaceContainerHighest
-            : Theme.of(context).colorScheme.primaryContainer,
+            ? colorScheme.surfaceContainerHighest
+            : colorScheme.primaryContainer,
         child: Icon(
           _getIcon(),
           color: notification.isRead
-              ? Theme.of(context).colorScheme.onSurfaceVariant
-              : Theme.of(context).colorScheme.primary,
+              ? colorScheme.onSurfaceVariant
+              : colorScheme.primary,
         ),
       ),
       title: Text(
@@ -167,21 +176,21 @@ class _NotificationTile extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-          const SizedBox(height: 4),
+          AppSpacing.verticalXxs,
           Text(
             notification.formattedDate ?? _formatDate(notification.createdAt),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: colorScheme.onSurfaceVariant,
                 ),
           ),
         ],
       ),
       trailing: !notification.isRead
           ? Container(
-              width: 8,
-              height: 8,
+              width: AppSpacing.xs,
+              height: AppSpacing.xs,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
+                color: colorScheme.primary,
                 shape: BoxShape.circle,
               ),
             )

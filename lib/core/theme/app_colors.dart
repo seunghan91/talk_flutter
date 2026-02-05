@@ -30,6 +30,14 @@ class AppColors {
   static const Color infoLight = Color(0xFF60A5FA);
   static const Color infoDark = Color(0xFF2563EB);
 
+  // ============ On-Color Variants (for text/icons on colored backgrounds) ============
+  static const Color onPrimary = Color(0xFFFFFFFF);
+  static const Color onSecondary = Color(0xFFFFFFFF);
+  static const Color onError = Color(0xFFFFFFFF);
+  static const Color onWarning = Color(0xFF171717);
+  static const Color onSuccess = Color(0xFFFFFFFF);
+  static const Color onInfo = Color(0xFFFFFFFF);
+
   // ============ Neutral Colors - Light ============
   static const Color neutral50 = Color(0xFFFAFAFA);
   static const Color neutral100 = Color(0xFFF5F5F5);
@@ -56,7 +64,7 @@ class AppColors {
   static const Color textPrimaryLight = Color(0xFF171717);
   static const Color textSecondaryLight = Color(0xFF525252);
   static const Color textTertiaryLight = Color(0xFF737373);
-  static const Color textDisabledLight = Color(0xFFA3A3A3);
+  static const Color textDisabledLight = Color(0xFF8A8A8A); // WCAG compliant
 
   static const Color textPrimaryDark = Color(0xFFFAFAFA);
   static const Color textSecondaryDark = Color(0xFFD4D4D4);

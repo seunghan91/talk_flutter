@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
 import 'package:talk_flutter/core/services/voice_recording_service.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 
 /// Inline voice message recorder widget for conversations
 /// Provides a compact recording interface with waveform visualization
@@ -171,173 +172,205 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
 
     // Error state
     if (_state == RecorderState.error) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(Icons.error_outline, color: colorScheme.error),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                _errorMessage ?? '녹음에 실패했습니다',
-                style: TextStyle(color: colorScheme.error),
+      return Semantics(
+        label: '녹음 오류',
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: colorScheme.error,
+                semanticLabel: '오류 아이콘',
               ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                setState(() {
-                  _state = RecorderState.idle;
-                  _errorMessage = null;
-                });
-              },
-            ),
-          ],
+              AppSpacing.horizontalXs,
+              Expanded(
+                child: Text(
+                  _errorMessage ?? '녹음에 실패했습니다',
+                  style: TextStyle(color: colorScheme.error),
+                ),
+              ),
+              Tooltip(
+                message: '닫기',
+                child: IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    setState(() {
+                      _state = RecorderState.idle;
+                      _errorMessage = null;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     // Idle state - show record button
     if (_state == RecorderState.idle) {
-      return Container(
-        padding: const EdgeInsets.all(8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Text(
-                  '음성 메시지 녹음...',
-                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+      return Semantics(
+        label: '음성 메시지 녹음 시작',
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.xs),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: AppRadius.extraLargeRadius,
+                  ),
+                  child: Text(
+                    '음성 메시지 녹음...',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            FloatingActionButton.small(
-              onPressed: _startRecording,
-              backgroundColor: colorScheme.primary,
-              child: const Icon(Icons.mic),
-            ),
-          ],
+              AppSpacing.horizontalXs,
+              Tooltip(
+                message: '녹음 시작',
+                child: FloatingActionButton.small(
+                  onPressed: _startRecording,
+                  backgroundColor: colorScheme.primary,
+                  child: const Icon(Icons.mic),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     // Recording state
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: colorScheme.errorContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Waveform visualization
-          if (_state == RecorderState.recording &&
-              _recordingService.recorderController != null)
-            SizedBox(
-              height: 48,
-              child: AudioWaveforms(
-                size: Size(MediaQuery.of(context).size.width - 48, 48),
-                recorderController: _recordingService.recorderController!,
-                waveStyle: WaveStyle(
-                  waveColor: colorScheme.error,
-                  extendWaveform: true,
-                  showMiddleLine: false,
-                  spacing: 6.0,
-                  waveThickness: 3.0,
-                  showDurationLabel: false,
+    return Semantics(
+      label: '녹음 중',
+      hint: '삭제하려면 왼쪽 버튼, 전송하려면 오른쪽 버튼을 탭하세요',
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        decoration: BoxDecoration(
+          color: colorScheme.errorContainer.withValues(alpha: 0.3),
+          borderRadius: AppRadius.largeRadius,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Waveform visualization
+            if (_state == RecorderState.recording &&
+                _recordingService.recorderController != null)
+              SizedBox(
+                height: 48,
+                child: AudioWaveforms(
+                  size: Size(MediaQuery.of(context).size.width - 48, 48),
+                  recorderController: _recordingService.recorderController!,
+                  waveStyle: WaveStyle(
+                    waveColor: colorScheme.error,
+                    extendWaveform: true,
+                    showMiddleLine: false,
+                    spacing: 6.0,
+                    waveThickness: 3.0,
+                    showDurationLabel: false,
+                  ),
+                  enableGesture: false,
                 ),
-                enableGesture: false,
+              )
+            else
+              const SizedBox(
+                height: 48,
+                child: Center(child: CircularProgressIndicator()),
               ),
-            )
-          else
-            const SizedBox(
-              height: 48,
-              child: Center(child: CircularProgressIndicator()),
+
+            AppSpacing.verticalXs,
+
+            // Controls row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Cancel button
+                Tooltip(
+                  message: '녹음 취소',
+                  child: IconButton(
+                    onPressed: _state == RecorderState.recording ? _cancelRecording : null,
+                    icon: const Icon(Icons.delete_outline),
+                    color: colorScheme.error,
+                  ),
+                ),
+
+                // Duration
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xxs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.error.withValues(alpha: 0.2),
+                    borderRadius: AppRadius.mediumRadius,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _state == RecorderState.recording
+                              ? colorScheme.error
+                              : colorScheme.onSurface.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      AppSpacing.horizontalXs,
+                      Text(
+                        _formatDuration(_recordingDuration),
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Send button
+                Tooltip(
+                  message: '전송',
+                  child: IconButton.filled(
+                    onPressed: _state == RecorderState.recording &&
+                            _recordingDuration.inSeconds > 0
+                        ? _stopAndSend
+                        : null,
+                    icon: _state == RecorderState.stopping
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send),
+                    style: IconButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      disabledBackgroundColor: colorScheme.surfaceContainerHighest,
+                    ),
+                  ),
+                ),
+              ],
             ),
 
-          const SizedBox(height: 8),
-
-          // Controls row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Cancel button
-              IconButton(
-                onPressed: _state == RecorderState.recording ? _cancelRecording : null,
-                icon: const Icon(Icons.delete_outline),
-                color: colorScheme.error,
-              ),
-
-              // Duration
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: colorScheme.error.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _state == RecorderState.recording
-                            ? colorScheme.error
-                            : colorScheme.onSurface.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _formatDuration(_recordingDuration),
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Send button
-              IconButton.filled(
-                onPressed: _state == RecorderState.recording &&
-                        _recordingDuration.inSeconds > 0
-                    ? _stopAndSend
-                    : null,
-                icon: _state == RecorderState.stopping
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send),
-                style: IconButton.styleFrom(
-                  backgroundColor: colorScheme.primary,
-                  foregroundColor: colorScheme.onPrimary,
-                  disabledBackgroundColor: colorScheme.surfaceContainerHighest,
-                ),
-              ),
-            ],
-          ),
-
-          // Progress bar
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: _recordingDuration.inSeconds / widget.maxDurationSeconds,
-            backgroundColor: colorScheme.surfaceContainerHighest,
-            color: colorScheme.error,
-          ),
-        ],
+            // Progress bar
+            AppSpacing.verticalXs,
+            LinearProgressIndicator(
+              value: _recordingDuration.inSeconds / widget.maxDurationSeconds,
+              backgroundColor: colorScheme.surfaceContainerHighest,
+              color: colorScheme.error,
+            ),
+          ],
+        ),
       ),
     );
   }

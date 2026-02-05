@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
 import 'app_spacing.dart';
+import 'app_typography.dart';
 
 /// App theme configuration - Unified theme for the entire app
 class AppTheme {
@@ -23,6 +24,28 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: colorScheme,
+
+      // Font family
+      fontFamily: AppTypography.fontFamily,
+
+      // Text Theme
+      textTheme: TextTheme(
+        displayLarge: AppTypography.displayLarge(color: AppColors.textPrimaryLight),
+        displayMedium: AppTypography.displayMedium(color: AppColors.textPrimaryLight),
+        displaySmall: AppTypography.displaySmall(color: AppColors.textPrimaryLight),
+        headlineLarge: AppTypography.headlineLarge(color: AppColors.textPrimaryLight),
+        headlineMedium: AppTypography.headlineMedium(color: AppColors.textPrimaryLight),
+        headlineSmall: AppTypography.headlineSmall(color: AppColors.textPrimaryLight),
+        titleLarge: AppTypography.titleLarge(color: AppColors.textPrimaryLight),
+        titleMedium: AppTypography.titleMedium(color: AppColors.textPrimaryLight),
+        titleSmall: AppTypography.titleSmall(color: AppColors.textPrimaryLight),
+        bodyLarge: AppTypography.bodyLarge(color: AppColors.textPrimaryLight),
+        bodyMedium: AppTypography.bodyMedium(color: AppColors.textPrimaryLight),
+        bodySmall: AppTypography.bodySmall(color: AppColors.textSecondaryLight),
+        labelLarge: AppTypography.labelLarge(color: AppColors.textPrimaryLight),
+        labelMedium: AppTypography.labelMedium(color: AppColors.textSecondaryLight),
+        labelSmall: AppTypography.labelSmall(color: AppColors.textSecondaryLight),
+      ),
 
       // Scaffold
       scaffoldBackgroundColor: AppColors.backgroundLight,
@@ -248,6 +271,28 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
+
+      // Font family
+      fontFamily: AppTypography.fontFamily,
+
+      // Text Theme
+      textTheme: TextTheme(
+        displayLarge: AppTypography.displayLarge(color: AppColors.textPrimaryDark),
+        displayMedium: AppTypography.displayMedium(color: AppColors.textPrimaryDark),
+        displaySmall: AppTypography.displaySmall(color: AppColors.textPrimaryDark),
+        headlineLarge: AppTypography.headlineLarge(color: AppColors.textPrimaryDark),
+        headlineMedium: AppTypography.headlineMedium(color: AppColors.textPrimaryDark),
+        headlineSmall: AppTypography.headlineSmall(color: AppColors.textPrimaryDark),
+        titleLarge: AppTypography.titleLarge(color: AppColors.textPrimaryDark),
+        titleMedium: AppTypography.titleMedium(color: AppColors.textPrimaryDark),
+        titleSmall: AppTypography.titleSmall(color: AppColors.textPrimaryDark),
+        bodyLarge: AppTypography.bodyLarge(color: AppColors.textPrimaryDark),
+        bodyMedium: AppTypography.bodyMedium(color: AppColors.textPrimaryDark),
+        bodySmall: AppTypography.bodySmall(color: AppColors.textSecondaryDark),
+        labelLarge: AppTypography.labelLarge(color: AppColors.textPrimaryDark),
+        labelMedium: AppTypography.labelMedium(color: AppColors.textSecondaryDark),
+        labelSmall: AppTypography.labelSmall(color: AppColors.textSecondaryDark),
+      ),
 
       // Scaffold
       scaffoldBackgroundColor: AppColors.backgroundDark,

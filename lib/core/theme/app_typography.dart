@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
 
 /// App typography system - Consistent text styles across the app
 class AppTypography {
@@ -18,6 +17,7 @@ class AppTypography {
 
   // ============ Display Styles ============
   static TextStyle displayLarge({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 57,
         fontWeight: regular,
         letterSpacing: -0.25,
@@ -26,6 +26,7 @@ class AppTypography {
       );
 
   static TextStyle displayMedium({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 45,
         fontWeight: regular,
         letterSpacing: 0,
@@ -34,6 +35,7 @@ class AppTypography {
       );
 
   static TextStyle displaySmall({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 36,
         fontWeight: regular,
         letterSpacing: 0,
@@ -43,6 +45,7 @@ class AppTypography {
 
   // ============ Headline Styles ============
   static TextStyle headlineLarge({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 32,
         fontWeight: bold,
         letterSpacing: 0,
@@ -51,6 +54,7 @@ class AppTypography {
       );
 
   static TextStyle headlineMedium({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 28,
         fontWeight: semiBold,
         letterSpacing: 0,
@@ -59,6 +63,7 @@ class AppTypography {
       );
 
   static TextStyle headlineSmall({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 24,
         fontWeight: semiBold,
         letterSpacing: 0,
@@ -68,6 +73,7 @@ class AppTypography {
 
   // ============ Title Styles ============
   static TextStyle titleLarge({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 22,
         fontWeight: semiBold,
         letterSpacing: 0,
@@ -76,6 +82,7 @@ class AppTypography {
       );
 
   static TextStyle titleMedium({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 16,
         fontWeight: semiBold,
         letterSpacing: 0.15,
@@ -84,6 +91,7 @@ class AppTypography {
       );
 
   static TextStyle titleSmall({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 14,
         fontWeight: semiBold,
         letterSpacing: 0.1,
@@ -93,6 +101,7 @@ class AppTypography {
 
   // ============ Body Styles ============
   static TextStyle bodyLarge({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 16,
         fontWeight: regular,
         letterSpacing: 0.5,
@@ -101,6 +110,7 @@ class AppTypography {
       );
 
   static TextStyle bodyMedium({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 14,
         fontWeight: regular,
         letterSpacing: 0.25,
@@ -109,6 +119,7 @@ class AppTypography {
       );
 
   static TextStyle bodySmall({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 12,
         fontWeight: regular,
         letterSpacing: 0.4,
@@ -118,6 +129,7 @@ class AppTypography {
 
   // ============ Label Styles ============
   static TextStyle labelLarge({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 14,
         fontWeight: medium,
         letterSpacing: 0.1,
@@ -126,6 +138,7 @@ class AppTypography {
       );
 
   static TextStyle labelMedium({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 12,
         fontWeight: medium,
         letterSpacing: 0.5,
@@ -134,6 +147,7 @@ class AppTypography {
       );
 
   static TextStyle labelSmall({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 11,
         fontWeight: medium,
         letterSpacing: 0.5,
@@ -144,6 +158,7 @@ class AppTypography {
   // ============ Custom App Styles ============
   /// Timer display (for recording)
   static TextStyle timer({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 48,
         fontWeight: light,
         letterSpacing: -1,
@@ -153,6 +168,7 @@ class AppTypography {
 
   /// Balance display (for wallet)
   static TextStyle balance({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 36,
         fontWeight: bold,
         letterSpacing: -0.5,
@@ -162,6 +178,7 @@ class AppTypography {
 
   /// Badge text
   static TextStyle badge({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 10,
         fontWeight: bold,
         letterSpacing: 0,
@@ -169,22 +186,24 @@ class AppTypography {
         color: color ?? Colors.white,
       );
 
-  /// Empty state title
+  /// Empty state title - color should be provided by caller based on theme
   static TextStyle emptyStateTitle({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 18,
         fontWeight: semiBold,
         letterSpacing: 0,
         height: 1.33,
-        color: color ?? AppColors.textSecondaryLight,
+        color: color,
       );
 
-  /// Empty state description
+  /// Empty state description - color should be provided by caller based on theme
   static TextStyle emptyStateDescription({Color? color}) => TextStyle(
+        fontFamily: fontFamily,
         fontSize: 14,
         fontWeight: regular,
         letterSpacing: 0.25,
         height: 1.5,
-        color: color ?? AppColors.textTertiaryLight,
+        color: color,
       );
 }
 

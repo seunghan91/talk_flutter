@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/domain/entities/broadcast.dart';
 import 'package:talk_flutter/presentation/blocs/auth/auth_bloc.dart';
 import 'package:talk_flutter/presentation/blocs/broadcast/broadcast_bloc.dart';
@@ -32,8 +33,10 @@ class _BroadcastListScreenState extends State<BroadcastListScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return SafeArea(
+      top: false,
+      child: Scaffold(
+        appBar: AppBar(
         title: const Text('브로드캐스트'),
         bottom: TabBar(
           controller: _tabController,
@@ -99,10 +102,11 @@ class _BroadcastListScreenState extends State<BroadcastListScreen>
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/broadcast/record'),
-        icon: const Icon(Icons.mic),
-        label: const Text('새 브로드캐스트'),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => context.push('/broadcast/record'),
+          icon: const Icon(Icons.mic),
+          label: const Text('새 브로드캐스트'),
+        ),
       ),
     );
   }
@@ -136,10 +140,10 @@ class _BroadcastList extends StatelessWidget {
           children: [
             Icon(
               emptyIcon,
-              size: 64,
+              size: AppIconSize.hero,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 16),
+            AppSpacing.verticalMd,
             Text(
               emptyMessage,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -154,7 +158,7 @@ class _BroadcastList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         itemCount: broadcasts.length,
         itemBuilder: (context, index) {
           final broadcast = broadcasts[index];
@@ -173,12 +177,12 @@ class _BroadcastTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xxs),
       child: InkWell(
         onTap: () => context.push('/broadcast/${broadcast.id}'),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.cardRadius,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: AppSpacing.cardPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -194,7 +198,7 @@ class _BroadcastTile extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  AppSpacing.horizontalSm,
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,7 +230,7 @@ class _BroadcastTile extends StatelessWidget {
                 ],
               ),
               if (broadcast.content != null && broadcast.content!.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                AppSpacing.verticalSm,
                 Text(
                   broadcast.content!,
                   maxLines: 2,
@@ -234,15 +238,15 @@ class _BroadcastTile extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
-              const SizedBox(height: 12),
+              AppSpacing.verticalSm,
               Row(
                 children: [
                   Icon(
                     Icons.mic,
-                    size: 16,
+                    size: AppIconSize.sm,
                     color: Theme.of(context).colorScheme.primary,
                   ),
-                  const SizedBox(width: 4),
+                  AppSpacing.horizontalXxs,
                   Text(
                     broadcast.formattedDuration,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -252,10 +256,10 @@ class _BroadcastTile extends StatelessWidget {
                   const Spacer(),
                   if (broadcast.isExpiringSoon)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppRadius.mediumRadius,
                       ),
                       child: Text(
                         '곧 만료',

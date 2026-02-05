@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talk_flutter/core/services/voice_recording_service.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/presentation/blocs/broadcast/broadcast_bloc.dart';
 
 /// Broadcast recording screen with real audio recording and waveform visualization
@@ -163,9 +164,9 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
     ));
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('브로드캐스트를 전송 중입니다...'),
-        backgroundColor: Colors.blue,
+      SnackBar(
+        content: const Text('브로드캐스트를 전송 중입니다...'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
 
@@ -212,7 +213,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage ?? '전송에 실패했습니다'),
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         }
@@ -223,19 +224,20 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
           leading: IconButton(
             icon: const Icon(Icons.close),
             onPressed: () async {
+              final navigator = GoRouter.of(context);
               if (_state == RecordingState.recording) {
                 await _cancelRecording();
               } else if (_recordedFilePath != null) {
                 await _recordingService.deleteRecording(_recordedFilePath!);
               }
               if (!mounted) return;
-              context.pop();
+              navigator.pop();
             },
           ),
         ),
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppSpacing.xl),
             child: Column(
               children: [
                 const Spacer(),
@@ -243,7 +245,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
                 // Recording visualization
                 _buildRecordingVisualization(),
 
-                const SizedBox(height: 32),
+                AppSpacing.verticalXxl,
 
                 // Timer
                 Text(
@@ -254,7 +256,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
                       ),
                 ),
 
-                const SizedBox(height: 8),
+                AppSpacing.verticalXs,
 
                 // Status text
                 Text(
@@ -273,7 +275,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
                 // Recording controls
                 _buildRecordingControls(),
 
-                const SizedBox(height: 32),
+                AppSpacing.verticalXxl,
 
                 // Progress indicator
                 if (_state == RecordingState.recording)
@@ -283,7 +285,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
                         value: _recordingDuration.inSeconds / _maxDurationSeconds,
                         backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                       ),
-                      const SizedBox(height: 8),
+                      AppSpacing.verticalXs,
                       Text(
                         '${_maxDurationSeconds - _recordingDuration.inSeconds}초 남음',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -300,7 +302,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
                         ),
                   ),
 
-                const SizedBox(height: 16),
+                AppSpacing.verticalMd,
               ],
             ),
           ),
@@ -319,7 +321,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
     if (isRecording && _recordingService.recorderController != null) {
       return Container(
         height: 200,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: AudioWaveforms(
           size: Size(MediaQuery.of(context).size.width - 80, 150),
           recorderController: _recordingService.recorderController!,
@@ -371,7 +373,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
               ),
               child: Icon(
                 _getStateIcon(),
-                size: 60,
+                size: AppIconSize.hero,
                 color: hasError
                     ? Theme.of(context).colorScheme.error
                     : isRecorded
@@ -438,26 +440,26 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
           IconButton.filled(
             onPressed: _resetRecording,
             icon: const Icon(Icons.refresh),
-            iconSize: 32,
+            iconSize: AppIconSize.xl,
             style: IconButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               foregroundColor: Theme.of(context).colorScheme.onSurface,
-              minimumSize: const Size(64, 64),
+              minimumSize: const Size(AppIconSize.hero, AppIconSize.hero),
             ),
           )
         else if (isRecording)
           IconButton.filled(
             onPressed: _cancelRecording,
             icon: const Icon(Icons.close),
-            iconSize: 32,
+            iconSize: AppIconSize.xl,
             style: IconButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.errorContainer,
               foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
-              minimumSize: const Size(64, 64),
+              minimumSize: const Size(AppIconSize.hero, AppIconSize.hero),
             ),
           )
         else
-          const SizedBox(width: 64),
+          const SizedBox(width: AppIconSize.hero),
 
         // Main record/stop button
         GestureDetector(
@@ -465,8 +467,8 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
               ? null
               : (isRecording ? _stopRecording : (isIdle ? _startRecording : null)),
           child: Container(
-            width: 80,
-            height: 80,
+            width: AppIconSize.heroLarge,
+            height: AppIconSize.heroLarge,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isProcessing
@@ -490,11 +492,11 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
                     ],
             ),
             child: isProcessing
-                ? const Center(
+                ? Center(
                     child: SizedBox(
-                      width: 32,
-                      height: 32,
-                      child: CircularProgressIndicator(strokeWidth: 3),
+                      width: AppIconSize.xl,
+                      height: AppIconSize.xl,
+                      child: const CircularProgressIndicator(strokeWidth: 3),
                     ),
                   )
                 : Icon(
@@ -505,8 +507,8 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
                             : Icons.mic,
                     color: isRecorded
                         ? Theme.of(context).colorScheme.onSurfaceVariant
-                        : Colors.white,
-                    size: 40,
+                        : Theme.of(context).colorScheme.onPrimary,
+                    size: AppIconSize.xl + AppIconSize.xs,
                   ),
           ),
         ),
@@ -520,26 +522,26 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
               return IconButton.filled(
                 onPressed: isSending ? null : _sendBroadcast,
                 icon: isSending
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
+                    ? SizedBox(
+                        width: AppIconSize.lg,
+                        height: AppIconSize.lg,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       )
                     : const Icon(Icons.send),
-                iconSize: 32,
+                iconSize: AppIconSize.xl,
                 style: IconButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  minimumSize: const Size(64, 64),
+                  minimumSize: const Size(AppIconSize.hero, AppIconSize.hero),
                 ),
               );
             },
           )
         else
-          const SizedBox(width: 64),
+          const SizedBox(width: AppIconSize.hero),
       ],
     );
   }

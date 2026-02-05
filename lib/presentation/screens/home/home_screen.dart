@@ -50,85 +50,87 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: BlocBuilder<AuthBloc, AuthState>(
-        builder: (context, authState) {
-          return BlocBuilder<BroadcastBloc, BroadcastState>(
-            builder: (context, broadcastState) {
-              return RefreshIndicator(
-                onRefresh: () async {
-                  context.read<BroadcastBloc>().add(const BroadcastListRequested(refresh: true));
-                },
-                child: CustomScrollView(
-                  slivers: [
-                    // Welcome header
-                    SliverToBoxAdapter(
-                      child: _WelcomeHeader(
-                        nickname: authState.user?.nickname ?? 'User',
+      body: SafeArea(
+        child: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, authState) {
+            return BlocBuilder<BroadcastBloc, BroadcastState>(
+              builder: (context, broadcastState) {
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<BroadcastBloc>().add(const BroadcastListRequested(refresh: true));
+                  },
+                  child: CustomScrollView(
+                    slivers: [
+                      // Welcome header
+                      SliverToBoxAdapter(
+                        child: _WelcomeHeader(
+                          nickname: authState.user?.nickname ?? 'User',
+                        ),
                       ),
-                    ),
 
-                    // Loading indicator with skeleton
-                    if (broadcastState.isLoading && broadcastState.broadcasts.isEmpty)
-                      SliverFillRemaining(
-                        child: SkeletonList.broadcasts(count: 3),
-                      )
-                    // Error state
-                    else if (broadcastState.status == BroadcastStatus.error &&
-                             broadcastState.broadcasts.isEmpty)
-                      SliverFillRemaining(
-                        child: AppErrorState.generic(
-                          message: broadcastState.errorMessage ?? '오류가 발생했습니다',
-                          onRetry: () {
-                            context.read<BroadcastBloc>().add(
-                              const BroadcastListRequested(refresh: true),
-                            );
-                          },
-                        ),
-                      )
-                    // Empty state with CTA
-                    else if (broadcastState.broadcasts.isEmpty)
-                      SliverFillRemaining(
-                        child: AppEmptyState.noBroadcasts(
-                          onRecord: () => context.push('/broadcast/record'),
-                        ),
-                      )
-                    // Broadcasts list - only show received (not sent by me)
-                    else
-                      SliverPadding(
-                        padding: const EdgeInsets.all(16),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              // Filter received broadcasts only
-                              final receivedBroadcasts = broadcastState.broadcasts
-                                  .where((b) => b.userId != authState.user?.id)
-                                  .toList();
-
-                              if (index >= receivedBroadcasts.length) return null;
-
-                              final broadcast = receivedBroadcasts[index];
-                              return _BroadcastCard(
-                                broadcast: broadcast,
-                                onTap: () {
-                                  context.push('/broadcast/${broadcast.id}');
-                                },
-                                onReply: () {
-                                  context.push('/broadcast/reply/${broadcast.id}');
-                                },
+                      // Loading indicator with skeleton
+                      if (broadcastState.isLoading && broadcastState.broadcasts.isEmpty)
+                        SliverFillRemaining(
+                          child: SkeletonList.broadcasts(count: 3),
+                        )
+                      // Error state
+                      else if (broadcastState.status == BroadcastStatus.error &&
+                               broadcastState.broadcasts.isEmpty)
+                        SliverFillRemaining(
+                          child: AppErrorState.generic(
+                            message: broadcastState.errorMessage ?? '오류가 발생했습니다',
+                            onRetry: () {
+                              context.read<BroadcastBloc>().add(
+                                const BroadcastListRequested(refresh: true),
                               );
                             },
-                            childCount: broadcastState.broadcasts
-                                .where((b) => b.userId != authState.user?.id)
-                                .length,
+                          ),
+                        )
+                      // Empty state with CTA
+                      else if (broadcastState.broadcasts.isEmpty)
+                        SliverFillRemaining(
+                          child: AppEmptyState.noBroadcasts(
+                            onRecord: () => context.push('/broadcast/record'),
+                          ),
+                        )
+                      // Broadcasts list - only show received (not sent by me)
+                      else
+                        SliverPadding(
+                          padding: AppSpacing.screenPadding,
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                // Filter received broadcasts only
+                                final receivedBroadcasts = broadcastState.broadcasts
+                                    .where((b) => b.userId != authState.user?.id)
+                                    .toList();
+
+                                if (index >= receivedBroadcasts.length) return null;
+
+                                final broadcast = receivedBroadcasts[index];
+                                return _BroadcastCard(
+                                  broadcast: broadcast,
+                                  onTap: () {
+                                    context.push('/broadcast/${broadcast.id}');
+                                  },
+                                  onReply: () {
+                                    context.push('/broadcast/reply/${broadcast.id}');
+                                  },
+                                );
+                              },
+                              childCount: broadcastState.broadcasts
+                                  .where((b) => b.userId != authState.user?.id)
+                                  .length,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -141,13 +143,15 @@ class _WelcomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.secondary,
+            colorScheme.primary,
+            colorScheme.secondary,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -159,15 +163,15 @@ class _WelcomeHeader extends StatelessWidget {
           Text(
             '안녕하세요, $nickname님!',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
+                  color: colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
           ),
-          const SizedBox(height: 8),
+          AppSpacing.verticalXs,
           Text(
             '오늘 받은 음성 메시지를 확인해보세요',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: colorScheme.onPrimary.withValues(alpha: 0.9),
                 ),
           ),
         ],
@@ -189,13 +193,15 @@ class _BroadcastCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: AppSpacing.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.mediumRadius,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: AppSpacing.cardPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -231,7 +237,7 @@ class _BroadcastCard extends StatelessWidget {
                         Text(
                           _formatDate(broadcast.createdAt),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: colorScheme.onSurfaceVariant,
                               ),
                         ),
                       ],
@@ -248,13 +254,13 @@ class _BroadcastCard extends StatelessWidget {
                       }
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'report',
                         child: Row(
                           children: [
-                            Icon(Icons.flag_outlined),
-                            SizedBox(width: 8),
-                            Text('신고하기'),
+                            const Icon(Icons.flag_outlined),
+                            AppSpacing.horizontalXs,
+                            const Text('신고하기'),
                           ],
                         ),
                       ),
@@ -263,7 +269,7 @@ class _BroadcastCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 16),
+              AppSpacing.verticalMd,
 
               // Audio player
               if (broadcast.audioUrl != null)
@@ -274,18 +280,21 @@ class _BroadcastCard extends StatelessWidget {
               else
                 // Placeholder if no audio
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(24),
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: AppRadius.extraLargeRadius,
                   ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.mic,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: colorScheme.primary,
                       ),
-                      const SizedBox(width: 12),
+                      AppSpacing.horizontalSm,
                       Text(
                         broadcast.formattedDuration,
                         style: Theme.of(context).textTheme.bodyMedium,
@@ -296,7 +305,7 @@ class _BroadcastCard extends StatelessWidget {
 
               // Content text if exists
               if (broadcast.content != null && broadcast.content!.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                AppSpacing.verticalSm,
                 Text(
                   broadcast.content!,
                   style: Theme.of(context).textTheme.bodyMedium,
@@ -305,7 +314,7 @@ class _BroadcastCard extends StatelessWidget {
                 ),
               ],
 
-              const SizedBox(height: 12),
+              AppSpacing.verticalSm,
 
               // Actions
               Row(

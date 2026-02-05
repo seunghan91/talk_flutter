@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/domain/entities/wallet.dart';
 import 'package:talk_flutter/presentation/blocs/wallet/wallet_bloc.dart';
 import 'package:talk_flutter/presentation/blocs/wallet/wallet_event.dart';
@@ -23,91 +24,97 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('지갑'),
       ),
-      body: BlocConsumer<WalletBloc, WalletState>(
-        listener: (context, state) {
-          if (state.successMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.successMessage!)),
-            );
-          } else if (state.hasError && state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state.isLoading && !state.hasWallet) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: SafeArea(
+        child: BlocConsumer<WalletBloc, WalletState>(
+          listener: (context, state) {
+            if (state.successMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.successMessage!)),
+              );
+            } else if (state.hasError && state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: colorScheme.error,
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state.isLoading && !state.hasWallet) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<WalletBloc>().add(const WalletRequested());
-              context.read<WalletBloc>().add(const WalletTransactionsRequested());
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                children: [
-                  // Balance Card
-                  _BalanceCard(
-                    balance: state.formattedBalance,
-                    onDeposit: () => _showDepositDialog(context),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Transaction History
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '거래 내역',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const SizedBox(height: 12),
-                        if (state.transactions.isEmpty)
-                          _buildEmptyTransactions()
-                        else
-                          ...state.transactions.map((tx) => _TransactionTile(transaction: tx)),
-                      ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<WalletBloc>().add(const WalletRequested());
+                context.read<WalletBloc>().add(const WalletTransactionsRequested());
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    // Balance Card
+                    _BalanceCard(
+                      balance: state.formattedBalance,
+                      onDeposit: () => _showDepositDialog(context),
                     ),
-                  ),
-                ],
+                    AppSpacing.verticalXl,
+
+                    // Transaction History
+                    Padding(
+                      padding: AppSpacing.screenHorizontal,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '거래 내역',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          AppSpacing.verticalSm,
+                          if (state.transactions.isEmpty)
+                            _buildEmptyTransactions()
+                          else
+                            ...state.transactions.map((tx) => _TransactionTile(transaction: tx)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
 
   Widget _buildEmptyTransactions() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
       child: Center(
         child: Column(
           children: [
             Icon(
               Icons.receipt_long_outlined,
-              size: 48,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              size: AppIconSize.xxl,
+              color: colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 12),
+            AppSpacing.verticalSm,
             Text(
               '거래 내역이 없습니다',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: colorScheme.onSurfaceVariant,
                   ),
             ),
           ],
@@ -131,16 +138,16 @@ class _WalletScreenState extends State<WalletScreen> {
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: '충전 금액',
-                prefixText: '₩ ',
+                prefixText: '\u20a9 ',
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
+            AppSpacing.verticalMd,
             Wrap(
-              spacing: 8,
+              spacing: AppSpacing.xs,
               children: [5000, 10000, 30000, 50000].map((amount) {
                 return ActionChip(
-                  label: Text('₩${_formatNumber(amount)}'),
+                  label: Text('\u20a9${_formatNumber(amount)}'),
                   onPressed: () {
                     amountController.text = amount.toString();
                   },
@@ -194,23 +201,25 @@ class _BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
+      margin: AppSpacing.screenPadding,
+      padding: AppSpacing.dialogPadding,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.secondary,
+            colorScheme.primary,
+            colorScheme.secondary,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppRadius.largeRadius,
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-            blurRadius: 12,
+            color: colorScheme.primary.withValues(alpha: 0.3),
+            blurRadius: AppSpacing.sm,
             offset: const Offset(0, 4),
           ),
         ],
@@ -221,25 +230,25 @@ class _BalanceCard extends StatelessWidget {
           Text(
             '잔액',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: colorScheme.onPrimary.withValues(alpha: 0.8),
                 ),
           ),
-          const SizedBox(height: 8),
+          AppSpacing.verticalXs,
           Text(
             balance,
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  color: Colors.white,
+                  color: colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
           ),
-          const SizedBox(height: 24),
+          AppSpacing.verticalXl,
           SizedBox(
             width: double.infinity,
             child: FilledButton.tonal(
               onPressed: onDeposit,
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: colorScheme.onPrimary,
+                foregroundColor: colorScheme.primary,
               ),
               child: const Text('충전하기'),
             ),
@@ -257,22 +266,25 @@ class _TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isPositive = transaction.isDeposit;
+    final positiveColor = Colors.green;
+    final negativeColor = Colors.red;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         children: [
           CircleAvatar(
             backgroundColor: isPositive
-                ? Colors.green.withValues(alpha: 0.1)
-                : Colors.red.withValues(alpha: 0.1),
+                ? positiveColor.withValues(alpha: 0.1)
+                : negativeColor.withValues(alpha: 0.1),
             child: Icon(
               isPositive ? Icons.add : Icons.remove,
-              color: isPositive ? Colors.green : Colors.red,
+              color: isPositive ? positiveColor : negativeColor,
             ),
           ),
-          const SizedBox(width: 12),
+          AppSpacing.horizontalSm,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,13 +299,13 @@ class _TransactionTile extends StatelessWidget {
                   Text(
                     transaction.description!,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                   ),
                 Text(
                   transaction.formattedDate ?? _formatDate(transaction.createdAt),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                 ),
               ],
@@ -302,7 +314,7 @@ class _TransactionTile extends StatelessWidget {
           Text(
             '${isPositive ? '+' : '-'}${transaction.formattedAmount}',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: isPositive ? Colors.green : Colors.red,
+                  color: isPositive ? positiveColor : negativeColor,
                   fontWeight: FontWeight.bold,
                 ),
           ),

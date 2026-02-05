@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/domain/entities/broadcast.dart';
 import 'package:talk_flutter/domain/repositories/broadcast_repository.dart';
 import 'package:talk_flutter/presentation/blocs/broadcast/broadcast_bloc.dart';
@@ -98,7 +99,9 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
       appBar: AppBar(
         title: const Text('답장하기'),
       ),
-      body: _buildBody(),
+      body: SafeArea(
+        child: _buildBody(),
+      ),
     );
   }
 
@@ -114,12 +117,12 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
           children: [
             Icon(
               Icons.error_outline,
-              size: 64,
+              size: AppIconSize.hero,
               color: Theme.of(context).colorScheme.error,
             ),
-            const SizedBox(height: 16),
+            AppSpacing.verticalMd,
             Text(_error!),
-            const SizedBox(height: 16),
+            AppSpacing.verticalMd,
             FilledButton(
               onPressed: _loadBroadcast,
               child: const Text('다시 시도'),
@@ -132,7 +135,7 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
     final broadcast = _broadcast!;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.screenPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -140,7 +143,7 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
           Card(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.cardPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -155,7 +158,7 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      AppSpacing.horizontalSm,
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,14 +181,14 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
                     ],
                   ),
                   if (broadcast.audioUrl != null) ...[
-                    const SizedBox(height: 16),
+                    AppSpacing.verticalMd,
                     VoiceMessagePlayer(
                       audioUrl: broadcast.audioUrl!,
                       durationSeconds: broadcast.duration,
                     ),
                   ],
                   if (broadcast.content != null && broadcast.content!.isNotEmpty) ...[
-                    const SizedBox(height: 12),
+                    AppSpacing.verticalSm,
                     Text(
                       broadcast.content!,
                       style: Theme.of(context).textTheme.bodyMedium,
@@ -195,7 +198,7 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          AppSpacing.verticalXl,
 
           // Reply section
           Text(
@@ -204,19 +207,19 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
                   fontWeight: FontWeight.bold,
                 ),
           ),
-          const SizedBox(height: 8),
+          AppSpacing.verticalXs,
           Text(
             '아래 버튼을 눌러 음성 메시지를 녹음하세요.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
-          const SizedBox(height: 24),
+          AppSpacing.verticalXl,
 
           // Voice recorder
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: AppSpacing.dialogPadding,
               child: VoiceMessageRecorder(
                 onRecordingComplete: (path, duration) {
                   setState(() {
@@ -230,16 +233,16 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
 
           // Send button
           if (_recordedPath != null) ...[
-            const SizedBox(height: 24),
+            AppSpacing.verticalXl,
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: _isSending ? null : _sendReply,
                 icon: _isSending
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                    ? SizedBox(
+                        width: AppIconSize.md,
+                        height: AppIconSize.md,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.send),
                 label: Text(_isSending ? '전송 중...' : '답장 보내기'),
@@ -247,23 +250,23 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
             ),
           ],
 
-          const SizedBox(height: 32),
+          AppSpacing.verticalXxl,
 
           // Info
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.cardPadding,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppRadius.mediumRadius,
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.info_outline,
-                  size: 20,
+                  size: AppIconSize.md,
                   color: Theme.of(context).colorScheme.primary,
                 ),
-                const SizedBox(width: 12),
+                AppSpacing.horizontalSm,
                 Expanded(
                   child: Text(
                     '답장을 보내면 상대방과 1:1 대화가 시작됩니다.',

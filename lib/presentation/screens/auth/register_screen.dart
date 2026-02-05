@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:talk_flutter/core/constants/app_constants.dart';
 import 'package:talk_flutter/core/enums/app_enums.dart';
 import 'package:talk_flutter/core/extensions/extensions.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/presentation/blocs/auth/auth_bloc.dart';
 
 /// Registration screen with phone verification
@@ -73,6 +74,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('회원가입'),
@@ -89,7 +92,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.errorMessage!),
-                backgroundColor: Theme.of(context).colorScheme.error,
+                backgroundColor: colorScheme.error,
               ),
             );
           } else if (state.isCodeSent && _currentStep == 0) {
@@ -126,26 +129,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
               },
               controlsBuilder: (context, details) {
                 return Padding(
-                  padding: const EdgeInsets.only(top: 16),
+                  padding: EdgeInsets.only(top: AppSpacing.md),
                   child: Row(
                     children: [
                       Expanded(
                         child: FilledButton(
                           onPressed: state.isLoading ? null : details.onStepContinue,
                           child: state.isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
+                              ? SizedBox(
+                                  height: AppIconSize.md,
+                                  width: AppIconSize.md,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: colorScheme.onPrimary,
                                   ),
                                 )
                               : Text(_getButtonText()),
                         ),
                       ),
                       if (_currentStep > 0) ...[
-                        const SizedBox(width: 12),
+                        AppSpacing.horizontalSm,
                         OutlinedButton(
                           onPressed: details.onStepCancel,
                           child: const Text('이전'),
@@ -226,14 +229,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             return null;
           },
         ),
-        const SizedBox(height: 8),
+        AppSpacing.verticalXs,
         Text(
           '"-" 없이 숫자만 입력하세요',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
         ),
-        const SizedBox(height: 16),
+        AppSpacing.verticalMd,
         // Dev skip button
         _buildDevSkipSection(),
       ],
@@ -241,6 +244,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildCodeStep() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -265,7 +270,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             return null;
           },
         ),
-        const SizedBox(height: 8),
+        AppSpacing.verticalXs,
         Row(
           children: [
             Text(
@@ -278,33 +283,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        AppSpacing.verticalXs,
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(AppSpacing.sm),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(8),
+            color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+            borderRadius: AppRadius.smallRadius,
           ),
           child: Row(
             children: [
               Icon(
                 Icons.info_outline,
-                size: 16,
-                color: Theme.of(context).colorScheme.primary,
+                size: AppIconSize.sm,
+                color: colorScheme.primary,
               ),
-              const SizedBox(width: 8),
+              AppSpacing.horizontalXs,
               Expanded(
                 child: Text(
                   '테스트: 코드 111111을 사용하세요',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
+                        color: colorScheme.primary,
                       ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        AppSpacing.verticalMd,
         // Dev skip button
         _buildDevSkipSection(),
       ],
@@ -337,7 +342,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 16),
+          AppSpacing.verticalMd,
 
           // Gender
           DropdownButtonFormField<String>(
@@ -358,7 +363,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               }
             },
           ),
-          const SizedBox(height: 16),
+          AppSpacing.verticalMd,
 
           // Password
           TextFormField(
@@ -387,7 +392,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 16),
+          AppSpacing.verticalMd,
 
           // Confirm Password
           TextFormField(
@@ -425,13 +430,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   /// Dev section with skip and quick login buttons
   Widget _buildDevSkipSection() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: AppRadius.mediumRadius,
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+          color: colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -441,20 +448,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               Icon(
                 Icons.developer_mode,
-                size: 16,
-                color: Theme.of(context).colorScheme.primary,
+                size: AppIconSize.sm,
+                color: colorScheme.primary,
               ),
-              const SizedBox(width: 4),
+              AppSpacing.horizontalXxs,
               Text(
                 '개발용 옵션',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          AppSpacing.verticalSm,
           // Skip verification button
           SizedBox(
             width: double.infinity,
@@ -470,16 +477,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               label: const Text('인증 패스하기'),
             ),
           ),
-          const SizedBox(height: 8),
+          AppSpacing.verticalXs,
           const Divider(),
-          const SizedBox(height: 8),
+          AppSpacing.verticalXs,
           Text(
             '기존 테스트 계정으로 바로 로그인',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: colorScheme.onSurfaceVariant,
                 ),
           ),
-          const SizedBox(height: 8),
+          AppSpacing.verticalXs,
           Row(
             children: [
               Expanded(
@@ -495,7 +502,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: const Text('김채현'),
                 ),
               ),
-              const SizedBox(width: 8),
+              AppSpacing.horizontalXs,
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {
@@ -509,7 +516,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: const Text('이지원'),
                 ),
               ),
-              const SizedBox(width: 8),
+              AppSpacing.horizontalXs,
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {

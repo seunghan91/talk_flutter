@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talk_flutter/core/enums/app_enums.dart';
 import 'package:talk_flutter/core/extensions/extensions.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/presentation/blocs/auth/auth_bloc.dart';
 
 /// Login screen
@@ -39,6 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -48,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.errorMessage!),
-                backgroundColor: Theme.of(context).colorScheme.error,
+                backgroundColor: colorScheme.error,
               ),
             );
           }
@@ -56,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
         builder: (context, state) {
           return SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(AppSpacing.xl),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -67,24 +70,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Logo & Title
                     Icon(
                       Icons.record_voice_over,
-                      size: 80,
-                      color: Theme.of(context).colorScheme.primary,
+                      size: AppIconSize.heroLarge,
+                      color: colorScheme.primary,
                     ),
-                    const SizedBox(height: 16),
+                    AppSpacing.verticalMd,
                     Text(
                       'Talkk',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: colorScheme.primary,
                           ),
                     ),
-                    const SizedBox(height: 8),
+                    AppSpacing.verticalXs,
                     Text(
                       '음성으로 연결되는 새로운 소셜',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                     ),
 
@@ -110,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    AppSpacing.verticalMd,
 
                     // Password field
                     TextFormField(
@@ -143,23 +146,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 24),
+                    AppSpacing.verticalXl,
 
                     // Login button
                     FilledButton(
                       onPressed: state.isLoading ? null : _login,
                       child: state.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
+                          ? SizedBox(
+                              height: AppIconSize.md,
+                              width: AppIconSize.md,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: colorScheme.onPrimary,
                               ),
                             )
                           : const Text('로그인'),
                     ),
-                    const SizedBox(height: 16),
+                    AppSpacing.verticalMd,
 
                     // Register link
                     TextButton(
@@ -167,18 +170,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text('계정이 없으신가요? 회원가입'),
                     ),
 
-                    const SizedBox(height: 32),
+                    AppSpacing.verticalXxl,
 
                     // Dev quick login buttons
                     const Divider(),
-                    const SizedBox(height: 8),
+                    AppSpacing.verticalXs,
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: EdgeInsets.all(AppSpacing.sm),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: AppRadius.mediumRadius,
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                          color: colorScheme.outline.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Column(
@@ -188,20 +191,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               Icon(
                                 Icons.developer_mode,
-                                size: 16,
-                                color: Theme.of(context).colorScheme.primary,
+                                size: AppIconSize.sm,
+                                color: colorScheme.primary,
                               ),
-                              const SizedBox(width: 4),
+                              AppSpacing.horizontalXxs,
                               Text(
                                 '개발용 빠른 로그인',
                                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                      color: Theme.of(context).colorScheme.primary,
+                                      color: colorScheme.primary,
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          AppSpacing.verticalSm,
                           Row(
                             children: [
                               Expanded(
@@ -219,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: const Text('김채현으로 로그인'),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              AppSpacing.horizontalXs,
                               Expanded(
                                 child: OutlinedButton(
                                   onPressed: state.isLoading
@@ -237,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          AppSpacing.verticalXs,
                           SizedBox(
                             width: double.infinity,
                             child: OutlinedButton(
@@ -258,7 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    AppSpacing.verticalMd,
                   ],
                 ),
               ),

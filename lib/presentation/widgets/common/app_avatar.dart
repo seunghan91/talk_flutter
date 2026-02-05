@@ -66,7 +66,12 @@ class AppAvatar extends StatelessWidget {
     Widget avatar = CircleAvatar(
       radius: radius,
       backgroundColor: effectiveBackgroundColor,
-      backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
+      backgroundImage: imageUrl != null ? _buildNetworkImage() : null,
+      onBackgroundImageError: imageUrl != null
+          ? (exception, stackTrace) {
+              // Error is handled silently - fallback to initials will be shown
+            }
+          : null,
       child: imageUrl == null
           ? Text(
               _getInitials(name),
@@ -105,15 +110,18 @@ class AppAvatar extends StatelessWidget {
             Positioned(
               right: 0,
               bottom: 0,
-              child: Container(
-                width: radius * 0.4,
-                height: radius * 0.4,
-                decoration: BoxDecoration(
-                  color: isOnline ? AppColors.online : AppColors.offline,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: theme.colorScheme.surface,
-                    width: 2,
+              child: Semantics(
+                label: isOnline ? '온라인' : '오프라인',
+                child: Container(
+                  width: radius * 0.4,
+                  height: radius * 0.4,
+                  decoration: BoxDecoration(
+                    color: isOnline ? AppColors.online : AppColors.offline,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.colorScheme.surface,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -130,15 +138,49 @@ class AppAvatar extends StatelessWidget {
       );
     }
 
+    // Wrap with Semantics for accessibility
+    avatar = Semantics(
+      label: _buildSemanticLabel(),
+      image: imageUrl != null,
+      child: avatar,
+    );
+
     // Add tap handler
     if (onTap != null) {
-      avatar = GestureDetector(
-        onTap: onTap,
-        child: avatar,
+      avatar = Tooltip(
+        message: name ?? '사용자 프로필',
+        child: GestureDetector(
+          onTap: onTap,
+          child: avatar,
+        ),
       );
     }
 
     return avatar;
+  }
+
+  ImageProvider _buildNetworkImage() {
+    return NetworkImage(imageUrl!);
+  }
+
+  String _buildSemanticLabel() {
+    final parts = <String>[];
+
+    if (name != null && name!.isNotEmpty) {
+      parts.add('$name 프로필');
+    } else {
+      parts.add('사용자 프로필');
+    }
+
+    if (showOnlineIndicator) {
+      parts.add(isOnline ? '온라인' : '오프라인');
+    }
+
+    if (badgeCount != null && badgeCount! > 0) {
+      parts.add('읽지 않은 메시지 $badgeCount개');
+    }
+
+    return parts.join(', ');
   }
 
   Widget _buildBadge(BuildContext context) {
@@ -146,24 +188,30 @@ class AppAvatar extends StatelessWidget {
     final effectiveBadgeColor = badgeColor ?? theme.colorScheme.error;
     final displayCount = badgeCount! > 99 ? '99+' : '$badgeCount';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: effectiveBadgeColor,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: theme.colorScheme.surface,
-          width: 2,
+    return Semantics(
+      label: '읽지 않은 메시지 $badgeCount개',
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xxs + 2,
+          vertical: 2,
         ),
-      ),
-      constraints: const BoxConstraints(
-        minWidth: 18,
-        minHeight: 18,
-      ),
-      child: Text(
-        displayCount,
-        style: AppTypography.badge(),
-        textAlign: TextAlign.center,
+        decoration: BoxDecoration(
+          color: effectiveBadgeColor,
+          borderRadius: BorderRadius.circular(AppRadius.sm + 2),
+          border: Border.all(
+            color: theme.colorScheme.surface,
+            width: 2,
+          ),
+        ),
+        constraints: const BoxConstraints(
+          minWidth: 18,
+          minHeight: 18,
+        ),
+        child: Text(
+          displayCount,
+          style: AppTypography.badge(),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }

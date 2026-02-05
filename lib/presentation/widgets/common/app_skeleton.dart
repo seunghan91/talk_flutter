@@ -41,6 +41,13 @@ class _AppShimmerState extends State<AppShimmer>
       return widget.child;
     }
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Use theme-aware colors for shimmer
+    final baseColor = isDark ? AppColors.neutral700 : AppColors.neutral200;
+    final highlightColor = isDark ? AppColors.neutral600 : AppColors.neutral100;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -50,10 +57,10 @@ class _AppShimmerState extends State<AppShimmer>
             return LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: const [
-                Color(0xFFE0E0E0),
-                Color(0xFFF5F5F5),
-                Color(0xFFE0E0E0),
+              colors: [
+                baseColor,
+                highlightColor,
+                baseColor,
               ],
               stops: [
                 _controller.value - 0.3,
@@ -89,14 +96,17 @@ class AppSkeleton extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return AppShimmer(
-      child: Container(
-        width: width,
-        height: height,
-        margin: margin,
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.neutral700 : AppColors.neutral200,
-          borderRadius: borderRadius ?? AppRadius.smallRadius,
+    return Semantics(
+      label: '로딩 중',
+      child: AppShimmer(
+        child: Container(
+          width: width,
+          height: height,
+          margin: margin,
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.neutral700 : AppColors.neutral200,
+            borderRadius: borderRadius ?? AppRadius.smallRadius,
+          ),
         ),
       ),
     );
@@ -165,45 +175,48 @@ class SkeletonListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppShimmer(
-      child: Padding(
-        padding: AppSpacing.listItemPadding,
-        child: Row(
-          children: [
-            // Avatar
-            AppSkeleton.circle(size: avatarSize),
+    return Semantics(
+      label: '항목 로딩 중',
+      child: AppShimmer(
+        child: Padding(
+          padding: AppSpacing.listItemPadding,
+          child: Row(
+            children: [
+              // Avatar
+              AppSkeleton.circle(size: avatarSize),
 
-            AppSpacing.horizontalMd,
+              AppSpacing.horizontalMd,
 
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  AppSkeleton.line(
-                    width: MediaQuery.of(context).size.width * titleWidth,
-                    height: 16,
-                  ),
-
-                  if (lineCount > 1) ...[
-                    AppSpacing.verticalXs,
-                    // Subtitle
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
                     AppSkeleton.line(
-                      width: MediaQuery.of(context).size.width * subtitleWidth,
-                      height: 14,
+                      width: MediaQuery.of(context).size.width * titleWidth,
+                      height: 16,
                     ),
-                  ],
-                ],
-              ),
-            ),
 
-            // Trailing
-            if (hasTrailing) ...[
-              AppSpacing.horizontalSm,
-              AppSkeleton.line(width: 40, height: 14),
+                    if (lineCount > 1) ...[
+                      AppSpacing.verticalXs,
+                      // Subtitle
+                      AppSkeleton.line(
+                        width: MediaQuery.of(context).size.width * subtitleWidth,
+                        height: 14,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              // Trailing
+              if (hasTrailing) ...[
+                AppSpacing.horizontalSm,
+                AppSkeleton.line(width: 40, height: 14),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -216,53 +229,56 @@ class SkeletonBroadcastCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppShimmer(
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: AppSpacing.cardPadding,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: AppRadius.cardRadius,
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
+    return Semantics(
+      label: '브로드캐스트 로딩 중',
+      child: AppShimmer(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+          padding: AppSpacing.cardPadding,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: AppRadius.cardRadius,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                AppSkeleton.circle(size: 48),
-                AppSpacing.horizontalMd,
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppSkeleton.line(width: 120, height: 16),
-                      AppSpacing.verticalXs,
-                      AppSkeleton.line(width: 80, height: 12),
-                    ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  AppSkeleton.circle(size: 48),
+                  AppSpacing.horizontalMd,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppSkeleton.line(width: 120, height: 16),
+                        AppSpacing.verticalXs,
+                        AppSkeleton.line(width: 80, height: 12),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
 
-            AppSpacing.verticalMd,
+              AppSpacing.verticalMd,
 
-            // Audio player placeholder
-            AppSkeleton.box(height: 56),
+              // Audio player placeholder
+              AppSkeleton.box(height: 56),
 
-            AppSpacing.verticalMd,
+              AppSpacing.verticalMd,
 
-            // Actions
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                AppSkeleton.line(width: 80, height: 32),
-              ],
-            ),
-          ],
+              // Actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AppSkeleton.line(width: 80, height: 32),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -275,52 +291,55 @@ class SkeletonConversationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppShimmer(
-      child: Padding(
-        padding: AppSpacing.listItemPadding,
-        child: Row(
-          children: [
-            // Avatar with badge placeholder
-            Stack(
-              children: [
-                AppSkeleton.circle(size: 56),
-              ],
-            ),
-
-            AppSpacing.horizontalMd,
-
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Semantics(
+      label: '대화 로딩 중',
+      child: AppShimmer(
+        child: Padding(
+          padding: AppSpacing.listItemPadding,
+          child: Row(
+            children: [
+              // Avatar with badge placeholder
+              Stack(
                 children: [
-                  AppSkeleton.line(width: 100, height: 16),
-                  AppSpacing.verticalXs,
-                  Row(
-                    children: [
-                      AppSkeleton.line(width: 16, height: 14),
-                      AppSpacing.horizontalXs,
-                      Expanded(
-                        child: AppSkeleton.line(height: 14),
-                      ),
-                    ],
-                  ),
+                  AppSkeleton.circle(size: 56),
                 ],
               ),
-            ),
 
-            AppSpacing.horizontalSm,
+              AppSpacing.horizontalMd,
 
-            // Trailing
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                AppSkeleton.line(width: 50, height: 12),
-                AppSpacing.verticalXs,
-                AppSkeleton.circle(size: 20),
-              ],
-            ),
-          ],
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppSkeleton.line(width: 100, height: 16),
+                    AppSpacing.verticalXs,
+                    Row(
+                      children: [
+                        AppSkeleton.line(width: 16, height: 14),
+                        AppSpacing.horizontalXs,
+                        Expanded(
+                          child: AppSkeleton.line(height: 14),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              AppSpacing.horizontalSm,
+
+              // Trailing
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  AppSkeleton.line(width: 50, height: 12),
+                  AppSpacing.verticalXs,
+                  AppSkeleton.circle(size: 20),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -342,11 +361,14 @@ class SkeletonList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: padding,
-      itemCount: itemCount,
-      itemBuilder: itemBuilder,
+    return Semantics(
+      label: '목록 로딩 중',
+      child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: padding,
+        itemCount: itemCount,
+        itemBuilder: itemBuilder,
+      ),
     );
   }
 

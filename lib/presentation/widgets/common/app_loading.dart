@@ -50,24 +50,30 @@ class AppLoading extends StatelessWidget {
     }
 
     if (message == null) {
-      return Center(child: indicator);
+      return Semantics(
+        label: '로딩 중',
+        child: Center(child: indicator),
+      );
     }
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          indicator,
-          AppSpacing.verticalMd,
-          Text(
-            message!,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+    return Semantics(
+      label: message ?? '로딩 중',
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            indicator,
+            AppSpacing.verticalMd,
+            Text(
+              message!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -263,14 +269,23 @@ class AppLoadingOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final overlayColor = isDark
+        ? AppColors.neutral900.withValues(alpha: 0.5)
+        : AppColors.neutral900.withValues(alpha: 0.3);
+
     return Stack(
       children: [
         child,
         if (isLoading)
           Positioned.fill(
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.3),
-              child: AppLoading.fullScreen(message: message),
+            child: Semantics(
+              label: message ?? '로딩 중',
+              child: Container(
+                color: overlayColor,
+                child: AppLoading.fullScreen(message: message),
+              ),
             ),
           ),
       ],

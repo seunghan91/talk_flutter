@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/domain/entities/broadcast.dart';
 import 'package:talk_flutter/domain/repositories/broadcast_repository.dart';
 import 'package:talk_flutter/presentation/blocs/broadcast/broadcast_bloc.dart';
@@ -76,23 +77,23 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'report',
                   child: Row(
                     children: [
-                      Icon(Icons.flag_outlined),
-                      SizedBox(width: 8),
-                      Text('신고하기'),
+                      const Icon(Icons.flag_outlined),
+                      AppSpacing.horizontalXs,
+                      const Text('신고하기'),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'block',
                   child: Row(
                     children: [
-                      Icon(Icons.block),
-                      SizedBox(width: 8),
-                      Text('차단하기'),
+                      const Icon(Icons.block),
+                      AppSpacing.horizontalXs,
+                      const Text('차단하기'),
                     ],
                   ),
                 ),
@@ -100,7 +101,9 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
             ),
         ],
       ),
-      body: _buildBody(),
+      body: SafeArea(
+        child: _buildBody(),
+      ),
       bottomNavigationBar: _broadcast != null ? _buildBottomBar() : null,
     );
   }
@@ -117,15 +120,15 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
           children: [
             Icon(
               Icons.error_outline,
-              size: 64,
+              size: AppIconSize.hero,
               color: Theme.of(context).colorScheme.error,
             ),
-            const SizedBox(height: 16),
+            AppSpacing.verticalMd,
             Text(
               _error!,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
-            const SizedBox(height: 16),
+            AppSpacing.verticalMd,
             FilledButton(
               onPressed: _loadBroadcast,
               child: const Text('다시 시도'),
@@ -138,19 +141,19 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
     final broadcast = _broadcast!;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.screenPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Sender info
           _SenderCard(broadcast: broadcast),
-          const SizedBox(height: 24),
+          AppSpacing.verticalXl,
 
           // Audio player
           if (broadcast.audioUrl != null)
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.cardPadding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -160,7 +163,7 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
                           Icons.graphic_eq,
                           color: Theme.of(context).colorScheme.primary,
                         ),
-                        const SizedBox(width: 8),
+                        AppSpacing.horizontalXs,
                         Text(
                           '음성 메시지',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -169,7 +172,7 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    AppSpacing.verticalMd,
                     VoiceMessagePlayer(
                       audioUrl: broadcast.audioUrl!,
                       durationSeconds: broadcast.duration,
@@ -178,13 +181,13 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
                 ),
               ),
             ),
-          const SizedBox(height: 16),
+          AppSpacing.verticalMd,
 
           // Content
           if (broadcast.content != null && broadcast.content!.isNotEmpty)
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.cardPadding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -194,7 +197,7 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
                             color: Theme.of(context).colorScheme.primary,
                           ),
                     ),
-                    const SizedBox(height: 8),
+                    AppSpacing.verticalXs,
                     Text(
                       broadcast.content!,
                       style: Theme.of(context).textTheme.bodyLarge,
@@ -203,12 +206,12 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
                 ),
               ),
             ),
-          const SizedBox(height: 16),
+          AppSpacing.verticalMd,
 
           // Broadcast info
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.cardPadding,
               child: Column(
                 children: [
                   _InfoRow(
@@ -243,7 +246,7 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
   Widget _buildBottomBar() {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.screenPadding,
         child: FilledButton.icon(
           onPressed: () => context.push('/broadcast/reply/${widget.broadcastId}'),
           icon: const Icon(Icons.reply),
@@ -294,11 +297,11 @@ class _SenderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.cardPadding,
         child: Row(
           children: [
             CircleAvatar(
-              radius: 30,
+              radius: AppAvatarSize.lg,
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(
                 broadcast.senderNickname?.substring(0, 1).toUpperCase() ?? '?',
@@ -308,7 +311,7 @@ class _SenderCard extends StatelessWidget {
                     ),
               ),
             ),
-            const SizedBox(width: 16),
+            AppSpacing.horizontalMd,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,7 +322,7 @@ class _SenderCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                   ),
-                  const SizedBox(height: 4),
+                  AppSpacing.verticalXxs,
                   Text(
                     broadcast.senderGender?.displayName ?? '',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -356,11 +359,11 @@ class _InfoRow extends StatelessWidget {
         : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: color),
-          const SizedBox(width: 12),
+          Icon(icon, size: AppIconSize.md, color: color),
+          AppSpacing.horizontalSm,
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
