@@ -156,12 +156,31 @@ flutter test
 - ApiException으로 API 에러 래핑
 - 사용자 친화적 메시지 변환
 
-## 개발 체크리스트
+## 개발 체크리스트 (2025.02 업데이트)
 
-- [ ] Auth BLoC 완성 (로그인/회원가입/로그아웃)
-- [ ] Broadcast BLoC 구현
-- [ ] Conversation BLoC 구현
-- [ ] 음성 녹음/재생 위젯
-- [ ] 푸시 알림 연동
-- [ ] 오프라인 모드 지원
-- [ ] 테스트 작성
+### ✅ 완료
+- [x] Auth BLoC 완성 (로그인/회원가입/로그아웃/SMS인증)
+- [x] Broadcast BLoC 구현 (목록조회/생성/답장)
+- [x] Conversation BLoC 구현 (목록/즐겨찾기/삭제)
+- [x] User BLoC 구현
+- [x] Notification BLoC 구현
+- [x] Wallet BLoC 구현
+- [x] 음성 녹음 위젯 (VoiceMessageRecorder + VoiceRecordingService)
+- [x] 음성 재생 위젯 (VoiceMessagePlayer + 파형 시각화)
+- [x] GoRouter 라우팅 설정 완료
+- [x] 모든 화면 UI 구현 완료:
+  - HomeScreen, MessagesScreen, FeedbackScreen, SettingsScreen
+  - LoginScreen, RegisterScreen
+  - RecordScreen, BroadcastDetailScreen, BroadcastReplyScreen
+  - ConversationScreen, ProfileScreen, ProfileEditScreen
+  - NotificationScreen, WalletScreen, ReportUserScreen
+- [x] 공통 위젯 (AppAvatar, AppBadge, AppLoading, AppEmptyState, AppErrorState, SkeletonList)
+- [x] Firebase 초기화 (Core, Crashlytics)
+- [x] DI 설정 (RepositoryProvider, BlocProvider)
+- [x] 테마 시스템 (Light/Dark)
+
+### 🚧 진행 필요
+- [ ] 푸시 알림 연동 (FCM 토큰 등록/수신 처리)
+- [ ] 오프라인 모드 지원 (Drift 캐싱 구현)
+- [ ] 테스트 커버리지 확대 (현재 BLoC 테스트만 일부 존재)
+- [ ] iOS/Android 빌드 테스트 및 배포
