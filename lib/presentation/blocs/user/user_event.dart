@@ -27,14 +27,16 @@ class UserByIdRequested extends UserEvent {
 class UserProfileUpdateRequested extends UserEvent {
   final String? nickname;
   final String? gender;
+  final File? profileImage;
 
   const UserProfileUpdateRequested({
     this.nickname,
     this.gender,
+    this.profileImage,
   });
 
   @override
-  List<Object?> get props => [nickname, gender];
+  List<Object?> get props => [nickname, gender, profileImage];
 }
 
 /// Change nickname

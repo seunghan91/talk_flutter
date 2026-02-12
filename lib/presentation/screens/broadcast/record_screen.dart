@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talk_flutter/core/services/voice_recording_service.dart';
@@ -64,6 +65,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
     if (!mounted) return;
 
     if (result.success) {
+      HapticFeedback.heavyImpact();
       setState(() {
         _state = RecordingState.recording;
         _recordingDuration = Duration.zero;
@@ -112,6 +114,7 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
     if (!mounted) return;
 
     if (result.success) {
+      HapticFeedback.mediumImpact();
       setState(() {
         _state = RecordingState.recorded;
         _recordedFilePath = result.filePath;
@@ -462,54 +465,43 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
           const SizedBox(width: AppIconSize.hero),
 
         // Main record/stop button
-        GestureDetector(
-          onTap: isProcessing
-              ? null
-              : (isRecording ? _stopRecording : (isIdle ? _startRecording : null)),
-          child: Container(
-            width: AppIconSize.heroLarge,
-            height: AppIconSize.heroLarge,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isProcessing
-                  ? Theme.of(context).colorScheme.surfaceContainerHighest
-                  : isRecording
-                      ? Theme.of(context).colorScheme.error
-                      : isRecorded
-                          ? Theme.of(context).colorScheme.surfaceContainerHighest
-                          : Theme.of(context).colorScheme.primary,
-              boxShadow: isProcessing || isRecorded
-                  ? null
-                  : [
-                      BoxShadow(
-                        color: (isRecording
-                                ? Theme.of(context).colorScheme.error
-                                : Theme.of(context).colorScheme.primary)
-                            .withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        spreadRadius: 5,
+        Material(
+          shape: const CircleBorder(),
+          color: isProcessing
+              ? Theme.of(context).colorScheme.surfaceContainerHighest
+              : isRecording
+                  ? Theme.of(context).colorScheme.error
+                  : isRecorded
+                      ? Theme.of(context).colorScheme.surfaceContainerHighest
+                      : Theme.of(context).colorScheme.primary,
+          elevation: isProcessing || isRecorded ? 0 : 8,
+          shadowColor: isRecording
+              ? Theme.of(context).colorScheme.error.withValues(alpha: 0.3)
+              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+          child: InkWell(
+            onTap: isProcessing
+                ? null
+                : (isRecording ? _stopRecording : (isIdle ? _startRecording : null)),
+            customBorder: const CircleBorder(),
+            child: SizedBox(
+              width: AppIconSize.heroLarge,
+              height: AppIconSize.heroLarge,
+              child: isProcessing
+                  ? Center(
+                      child: SizedBox(
+                        width: AppIconSize.xl,
+                        height: AppIconSize.xl,
+                        child: const CircularProgressIndicator(strokeWidth: 3),
                       ),
-                    ],
-            ),
-            child: isProcessing
-                ? Center(
-                    child: SizedBox(
-                      width: AppIconSize.xl,
-                      height: AppIconSize.xl,
-                      child: const CircularProgressIndicator(strokeWidth: 3),
+                    )
+                  : Icon(
+                      isRecording ? Icons.stop : Icons.mic,
+                      color: isRecorded
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Theme.of(context).colorScheme.onPrimary,
+                      size: AppIconSize.xl + AppIconSize.xs,
                     ),
-                  )
-                : Icon(
-                    isRecording
-                        ? Icons.stop
-                        : isRecorded
-                            ? Icons.mic
-                            : Icons.mic,
-                    color: isRecorded
-                        ? Theme.of(context).colorScheme.onSurfaceVariant
-                        : Theme.of(context).colorScheme.onPrimary,
-                    size: AppIconSize.xl + AppIconSize.xs,
-                  ),
+            ),
           ),
         ),
 

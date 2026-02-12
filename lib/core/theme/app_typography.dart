@@ -5,8 +5,10 @@ class AppTypography {
   AppTypography._();
 
   // ============ Font Family ============
-  static const String fontFamily = 'Pretendard';
-  static const String fontFamilyFallback = '.SF Pro Display';
+  // Using google_fonts package for dynamic font loading
+  // No need to bundle font assets manually
+  static const String fontFamily = 'NotoSansKR';
+  static const List<String> fontFamilyFallback = ['.SF Pro Display', 'Roboto'];
 
   // ============ Font Weights ============
   static const FontWeight light = FontWeight.w300;

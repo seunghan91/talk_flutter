@@ -28,8 +28,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
       appBar: AppBar(
         title: const Text('메시지'),
       ),
-      body: SafeArea(
-        child: BlocBuilder<ConversationBloc, ConversationState>(
+      body: BlocBuilder<ConversationBloc, ConversationState>(
           builder: (context, state) {
             // Loading state with skeleton
             if (state.isLoading && state.conversations.isEmpty) {
@@ -83,7 +82,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
               ),
             );
           },
-        ),
       ),
     );
   }
@@ -203,15 +201,21 @@ class _ConversationTile extends StatelessWidget {
                   ),
             ),
             AppSpacing.verticalXxs,
-            GestureDetector(
-              onTap: onToggleFavorite,
-              child: Icon(
+            IconButton(
+              onPressed: onToggleFavorite,
+              icon: Icon(
                 conversation.isFavorite ? Icons.star : Icons.star_border,
-                size: AppIconSize.md,
                 color: conversation.isFavorite
                     ? colorScheme.primary
                     : colorScheme.onSurfaceVariant,
               ),
+              iconSize: AppIconSize.md,
+              constraints: const BoxConstraints(
+                minWidth: 48,
+                minHeight: 48,
+              ),
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
             ),
           ],
         ),

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:talk_flutter/core/enums/app_enums.dart';
 import 'package:talk_flutter/data/datasources/remote/api_client.dart';
 import 'package:talk_flutter/domain/entities/user.dart';
@@ -8,10 +9,13 @@ import 'package:talk_flutter/domain/repositories/user_repository.dart';
 /// User repository implementation
 class UserRepositoryImpl implements UserRepository {
   final ApiClient _apiClient;
+  final Dio _dio;
 
   UserRepositoryImpl({
     required ApiClient apiClient,
-  }) : _apiClient = apiClient;
+    required Dio dio,
+  })  : _apiClient = apiClient,
+        _dio = dio;
 
   @override
   Future<User> getMe() async {
@@ -35,15 +39,33 @@ class UserRepositoryImpl implements UserRepository {
     String? gender,
     File? profileImage,
   }) async {
+    if (profileImage != null) {
+      // Use Dio directly for multipart upload
+      final formData = FormData.fromMap({
+        if (nickname != null) 'user[nickname]': nickname,
+        if (gender != null) 'user[gender]': gender,
+        'user[profile_image]': await MultipartFile.fromFile(
+          profileImage.path,
+          filename: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        ),
+      });
+
+      final response = await _dio.patch(
+        '/users/me',
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+        ),
+      );
+
+      final data = response.data as Map<String, dynamic>? ?? {};
+      final userData = data['user'] as Map<String, dynamic>? ?? data;
+      return _parseUser(userData);
+    }
+
     final body = <String, dynamic>{};
     if (nickname != null) body['nickname'] = nickname;
     if (gender != null) body['gender'] = gender;
-
-    // TODO: Handle profile image upload with multipart
-    if (profileImage != null) {
-      // For now, just update text fields
-      // Image upload requires separate handling
-    }
 
     final response = await _apiClient.updateMe(body);
     final data = response.data as Map<String, dynamic>? ?? {};

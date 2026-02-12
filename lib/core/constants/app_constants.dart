@@ -8,8 +8,8 @@ class AppConstants {
   /// Development API URL (localhost for local development)
   static const String apiBaseUrlDev = 'http://localhost:3000/api/v1';
 
-  /// Production API URL - Update this when production server is ready
-  static const String apiBaseUrlProd = 'https://talkk-api-prod.onrender.com/api/v1';
+  /// Production API URL
+  static const String apiBaseUrlProd = 'https://talkk-api.onrender.com/api/v1';
 
   /// Get the appropriate API URL based on build mode
   static String get apiBaseUrl => kDebugMode ? apiBaseUrlDev : apiBaseUrlProd;

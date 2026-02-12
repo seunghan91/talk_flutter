@@ -456,9 +456,9 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.smallRadius,
         ),
-        backgroundColor: AppColors.neutral200,
+        backgroundColor: AppColors.neutral700,
         contentTextStyle: const TextStyle(
-          color: AppColors.neutral900,
+          color: AppColors.neutral50,
           fontSize: 14,
         ),
       ),

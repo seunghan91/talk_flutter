@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:talk_flutter/core/constants/app_constants.dart';
 import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/presentation/blocs/user/user_bloc.dart';
@@ -17,6 +20,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nicknameController;
   late String _selectedGender;
+  File? _selectedImage;
   bool _isInitialized = false;
 
   @override
@@ -42,8 +46,53 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             UserProfileUpdateRequested(
               nickname: _nicknameController.text.trim(),
               gender: _selectedGender,
+              profileImage: _selectedImage,
             ),
           );
+    }
+  }
+
+  void _showImagePicker() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('카메라'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('갤러리'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
     }
   }
 
@@ -103,10 +152,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                           CircleAvatar(
                             radius: AppAvatarSize.hero,
                             backgroundColor: colorScheme.primaryContainer,
-                            backgroundImage: state.currentUser?.profileImageUrl != null
-                                ? NetworkImage(state.currentUser!.profileImageUrl!)
-                                : null,
-                            child: state.currentUser?.profileImageUrl == null
+                            backgroundImage: _selectedImage != null
+                                ? FileImage(_selectedImage!)
+                                : (state.currentUser?.profileImageUrl != null
+                                    ? NetworkImage(state.currentUser!.profileImageUrl!)
+                                    : null),
+                            child: (_selectedImage == null && state.currentUser?.profileImageUrl == null)
                                 ? Icon(
                                     Icons.person,
                                     size: AppIconSize.hero,
@@ -126,14 +177,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                   size: AppIconSize.sm + 2,
                                 ),
                                 color: colorScheme.onPrimary,
-                                onPressed: () {
-                                  // TODO: Image picker
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('프로필 사진 변경 기능 준비 중'),
-                                    ),
-                                  );
-                                },
+                                onPressed: () => _showImagePicker(),
                               ),
                             ),
                           ),

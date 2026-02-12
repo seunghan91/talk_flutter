@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -170,96 +171,117 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text('계정이 없으신가요? 회원가입'),
                     ),
 
-                    AppSpacing.verticalXxl,
+                    if (kDebugMode) ...[
+                      AppSpacing.verticalXxl,
 
-                    // Dev quick login buttons
-                    const Divider(),
-                    AppSpacing.verticalXs,
-                    Container(
-                      padding: EdgeInsets.all(AppSpacing.sm),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest,
-                        borderRadius: AppRadius.mediumRadius,
-                        border: Border.all(
-                          color: colorScheme.outline.withValues(alpha: 0.3),
+                      // Dev quick login buttons
+                      const Divider(),
+                      AppSpacing.verticalXs,
+                      Container(
+                        padding: EdgeInsets.all(AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest,
+                          borderRadius: AppRadius.mediumRadius,
+                          border: Border.all(
+                            color: colorScheme.outline.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.developer_mode,
+                                  size: AppIconSize.sm,
+                                  color: colorScheme.primary,
+                                ),
+                                AppSpacing.horizontalXxs,
+                                Text(
+                                  '개발용 빠른 로그인',
+                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                              ],
+                            ),
+                            AppSpacing.verticalSm,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: state.isLoading
+                                        ? null
+                                        : () {
+                                            context.read<AuthBloc>().add(
+                                                  const AuthLoginRequested(
+                                                    phoneNumber: '01011111111',
+                                                    password: 'password',
+                                                  ),
+                                                );
+                                          },
+                                    child: const Text('김철수'),
+                                  ),
+                                ),
+                                AppSpacing.horizontalXs,
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: state.isLoading
+                                        ? null
+                                        : () {
+                                            context.read<AuthBloc>().add(
+                                                  const AuthLoginRequested(
+                                                    phoneNumber: '01022222222',
+                                                    password: 'password',
+                                                  ),
+                                                );
+                                          },
+                                    child: const Text('이영희'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            AppSpacing.verticalXs,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: state.isLoading
+                                        ? null
+                                        : () {
+                                            context.read<AuthBloc>().add(
+                                                  const AuthLoginRequested(
+                                                    phoneNumber: '01033333333',
+                                                    password: 'password',
+                                                  ),
+                                                );
+                                          },
+                                    child: const Text('박지민'),
+                                  ),
+                                ),
+                                AppSpacing.horizontalXs,
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: state.isLoading
+                                        ? null
+                                        : () {
+                                            context.read<AuthBloc>().add(
+                                                  const AuthLoginRequested(
+                                                    phoneNumber: '01044444444',
+                                                    password: 'password',
+                                                  ),
+                                                );
+                                          },
+                                    child: const Text('최수진'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.developer_mode,
-                                size: AppIconSize.sm,
-                                color: colorScheme.primary,
-                              ),
-                              AppSpacing.horizontalXxs,
-                              Text(
-                                '개발용 빠른 로그인',
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                      color: colorScheme.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                            ],
-                          ),
-                          AppSpacing.verticalSm,
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: state.isLoading
-                                      ? null
-                                      : () {
-                                          context.read<AuthBloc>().add(
-                                                const AuthLoginRequested(
-                                                  phoneNumber: '01011111111',
-                                                  password: 'password',
-                                                ),
-                                              );
-                                        },
-                                  child: const Text('김채현으로 로그인'),
-                                ),
-                              ),
-                              AppSpacing.horizontalXs,
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: state.isLoading
-                                      ? null
-                                      : () {
-                                          context.read<AuthBloc>().add(
-                                                const AuthLoginRequested(
-                                                  phoneNumber: '01022222222',
-                                                  password: 'password',
-                                                ),
-                                              );
-                                        },
-                                  child: const Text('이지원으로 로그인'),
-                                ),
-                              ),
-                            ],
-                          ),
-                          AppSpacing.verticalXs,
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton(
-                              onPressed: state.isLoading
-                                  ? null
-                                  : () {
-                                      context.read<AuthBloc>().add(
-                                            const AuthLoginRequested(
-                                              phoneNumber: '01033333333',
-                                              password: 'password',
-                                            ),
-                                          );
-                                    },
-                              child: const Text('박지민으로 로그인'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    ],
 
                     AppSpacing.verticalMd,
                   ],

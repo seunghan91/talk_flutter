@@ -1,4 +1,6 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talk_flutter/core/enums/app_enums.dart';
 import 'package:talk_flutter/presentation/blocs/auth/auth_bloc.dart';
@@ -17,15 +19,35 @@ import 'package:talk_flutter/presentation/screens/notifications/notification_scr
 import 'package:talk_flutter/presentation/screens/profile/profile_screen.dart';
 import 'package:talk_flutter/presentation/screens/profile/profile_edit_screen.dart';
 import 'package:talk_flutter/presentation/screens/report/report_user_screen.dart';
+import 'package:talk_flutter/presentation/screens/settings/help_screen.dart';
+import 'package:talk_flutter/presentation/screens/settings/privacy_policy_screen.dart';
 import 'package:talk_flutter/presentation/screens/settings/settings_screen.dart';
+import 'package:talk_flutter/presentation/screens/settings/terms_of_service_screen.dart';
 import 'package:talk_flutter/presentation/screens/wallet/wallet_screen.dart';
 
-/// App router configuration using GoRouter
-final appRouter = GoRouter(
+/// Converts a BLoC stream into a ChangeNotifier for GoRouter.refreshListenable
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    _subscription = stream.asBroadcastStream().listen((_) {
+      notifyListeners();
+    });
+  }
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+/// Create app router with auth-aware refresh
+GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
   initialLocation: '/',
   debugLogDiagnostics: true,
+  refreshListenable: GoRouterRefreshStream(authBloc.stream),
   redirect: (context, state) {
-    final authState = context.read<AuthBloc>().state;
+    final authState = authBloc.state;
     final isAuthenticated = authState.status == AuthStatus.authenticated;
     final isAuthRoute = state.uri.path.startsWith('/auth');
     final isInitializing = authState.status == AuthStatus.initial ||
@@ -99,6 +121,23 @@ final appRouter = GoRouter(
       path: '/settings/profile',
       name: 'profile-edit',
       builder: (context, state) => const ProfileEditScreen(),
+    ),
+
+    // ============ Settings Sub-pages ============
+    GoRoute(
+      path: '/help',
+      name: 'help',
+      builder: (context, state) => const HelpScreen(),
+    ),
+    GoRoute(
+      path: '/privacy-policy',
+      name: 'privacy-policy',
+      builder: (context, state) => const PrivacyPolicyScreen(),
+    ),
+    GoRoute(
+      path: '/terms-of-service',
+      name: 'terms-of-service',
+      builder: (context, state) => const TermsOfServiceScreen(),
     ),
 
     // ============ Broadcast Routes ============

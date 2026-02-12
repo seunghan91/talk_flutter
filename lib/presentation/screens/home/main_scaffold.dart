@@ -46,7 +46,7 @@ class MainScaffold extends StatelessWidget {
         onPressed: () => context.push('/broadcast/record'),
         child: const Icon(Icons.mic),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 

@@ -50,87 +50,81 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, authState) {
-            return BlocBuilder<BroadcastBloc, BroadcastState>(
-              builder: (context, broadcastState) {
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<BroadcastBloc>().add(const BroadcastListRequested(refresh: true));
-                  },
-                  child: CustomScrollView(
-                    slivers: [
-                      // Welcome header
-                      SliverToBoxAdapter(
-                        child: _WelcomeHeader(
-                          nickname: authState.user?.nickname ?? 'User',
-                        ),
-                      ),
+      body: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, authState) {
+          return BlocBuilder<BroadcastBloc, BroadcastState>(
+            builder: (context, broadcastState) {
+              // Pre-compute filtered list once (not inside itemBuilder)
+              final receivedBroadcasts = broadcastState.broadcasts
+                  .where((b) => b.userId != authState.user?.id)
+                  .toList();
 
-                      // Loading indicator with skeleton
-                      if (broadcastState.isLoading && broadcastState.broadcasts.isEmpty)
-                        SliverFillRemaining(
-                          child: SkeletonList.broadcasts(count: 3),
-                        )
-                      // Error state
-                      else if (broadcastState.status == BroadcastStatus.error &&
-                               broadcastState.broadcasts.isEmpty)
-                        SliverFillRemaining(
-                          child: AppErrorState.generic(
-                            message: broadcastState.errorMessage ?? '오류가 발생했습니다',
-                            onRetry: () {
-                              context.read<BroadcastBloc>().add(
-                                const BroadcastListRequested(refresh: true),
+              return RefreshIndicator(
+                onRefresh: () async {
+                  context.read<BroadcastBloc>().add(const BroadcastListRequested(refresh: true));
+                },
+                child: CustomScrollView(
+                  slivers: [
+                    // Welcome header
+                    SliverToBoxAdapter(
+                      child: _WelcomeHeader(
+                        nickname: authState.user?.nickname ?? 'User',
+                      ),
+                    ),
+
+                    // Loading indicator with skeleton
+                    if (broadcastState.isLoading && broadcastState.broadcasts.isEmpty)
+                      SliverFillRemaining(
+                        child: SkeletonList.broadcasts(count: 3),
+                      )
+                    // Error state
+                    else if (broadcastState.status == BroadcastStatus.error &&
+                             broadcastState.broadcasts.isEmpty)
+                      SliverFillRemaining(
+                        child: AppErrorState.generic(
+                          message: broadcastState.errorMessage ?? '오류가 발생했습니다',
+                          onRetry: () {
+                            context.read<BroadcastBloc>().add(
+                              const BroadcastListRequested(refresh: true),
+                            );
+                          },
+                        ),
+                      )
+                    // Empty state with CTA
+                    else if (broadcastState.broadcasts.isEmpty)
+                      SliverFillRemaining(
+                        child: AppEmptyState.noBroadcasts(
+                          onRecord: () => context.push('/broadcast/record'),
+                        ),
+                      )
+                    // Broadcasts list - only show received (not sent by me)
+                    else
+                      SliverPadding(
+                        padding: AppSpacing.screenPadding,
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final broadcast = receivedBroadcasts[index];
+                              return _BroadcastCard(
+                                broadcast: broadcast,
+                                onTap: () {
+                                  context.push('/broadcast/${broadcast.id}');
+                                },
+                                onReply: () {
+                                  context.push('/broadcast/reply/${broadcast.id}');
+                                },
                               );
                             },
-                          ),
-                        )
-                      // Empty state with CTA
-                      else if (broadcastState.broadcasts.isEmpty)
-                        SliverFillRemaining(
-                          child: AppEmptyState.noBroadcasts(
-                            onRecord: () => context.push('/broadcast/record'),
-                          ),
-                        )
-                      // Broadcasts list - only show received (not sent by me)
-                      else
-                        SliverPadding(
-                          padding: AppSpacing.screenPadding,
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                // Filter received broadcasts only
-                                final receivedBroadcasts = broadcastState.broadcasts
-                                    .where((b) => b.userId != authState.user?.id)
-                                    .toList();
-
-                                if (index >= receivedBroadcasts.length) return null;
-
-                                final broadcast = receivedBroadcasts[index];
-                                return _BroadcastCard(
-                                  broadcast: broadcast,
-                                  onTap: () {
-                                    context.push('/broadcast/${broadcast.id}');
-                                  },
-                                  onReply: () {
-                                    context.push('/broadcast/reply/${broadcast.id}');
-                                  },
-                                );
-                              },
-                              childCount: broadcastState.broadcasts
-                                  .where((b) => b.userId != authState.user?.id)
-                                  .length,
-                            ),
+                            childCount: receivedBroadcasts.length,
                           ),
                         ),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -276,6 +270,8 @@ class _BroadcastCard extends StatelessWidget {
                 VoiceMessagePlayer(
                   audioUrl: broadcast.audioUrl!,
                   durationSeconds: broadcast.duration,
+                  sourceType: 'broadcast',
+                  sourceId: broadcast.id,
                 )
               else
                 // Placeholder if no audio

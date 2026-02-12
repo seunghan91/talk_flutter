@@ -185,6 +185,8 @@ class _BroadcastReplyScreenState extends State<BroadcastReplyScreen> {
                     VoiceMessagePlayer(
                       audioUrl: broadcast.audioUrl!,
                       durationSeconds: broadcast.duration,
+                      sourceType: 'broadcast',
+                      sourceId: broadcast.id,
                     ),
                   ],
                   if (broadcast.content != null && broadcast.content!.isNotEmpty) ...[

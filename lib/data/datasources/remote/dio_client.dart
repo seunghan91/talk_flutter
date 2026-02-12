@@ -61,6 +61,7 @@ class _AuthInterceptor extends Interceptor {
   final SecureStorageDatasource _secureStorage;
   final OnAuthExpired? onAuthExpired;
   bool _isHandlingExpiry = false;
+  bool _hasTriggeredLogout = false;
 
   _AuthInterceptor(this._secureStorage, {this.onAuthExpired});
 
@@ -72,7 +73,6 @@ class _AuthInterceptor extends Interceptor {
     // Skip auth for certain endpoints
     final noAuthPaths = [
       '/auth/phone_verifications',
-      '/auth/sessions',
       '/auth/registrations',
       '/auth/request_code',
       '/auth/verify_code',
@@ -87,6 +87,8 @@ class _AuthInterceptor extends Interceptor {
       final token = await _secureStorage.getAccessToken();
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
+        // Reset logout flag when we have a valid token (user logged in again)
+        _hasTriggeredLogout = false;
       }
     }
 
@@ -95,11 +97,10 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
-    // Handle 401 - token expired (only if we had a token)
+    // Handle 401 - trigger logout once per auth session
     if (err.response?.statusCode == 401) {
-      // Only trigger logout if user was authenticated (had a token)
-      final token = await _secureStorage.getAccessToken();
-      if (token != null && !_isHandlingExpiry && onAuthExpired != null) {
+      if (!_hasTriggeredLogout && !_isHandlingExpiry && onAuthExpired != null) {
+        _hasTriggeredLogout = true;
         _isHandlingExpiry = true;
         try {
           // Clear stored tokens

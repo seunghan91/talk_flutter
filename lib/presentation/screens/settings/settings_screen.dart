@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/presentation/blocs/auth/auth_bloc.dart';
+import 'package:talk_flutter/presentation/blocs/locale/locale_cubit.dart';
+import 'package:talk_flutter/presentation/blocs/theme/theme_cubit.dart';
 import 'package:talk_flutter/presentation/blocs/user/user_bloc.dart';
 
 /// Settings screen
@@ -112,23 +114,31 @@ class SettingsScreen extends StatelessWidget {
                 _SettingsSection(
                   title: '앱 설정',
                   children: [
-                    _SettingsTile(
-                      icon: Icons.dark_mode_outlined,
-                      title: '다크 모드',
-                      subtitle: '어두운 테마 사용',
-                      trailing: Switch(
-                        value: false, // TODO: Get from theme settings
-                        onChanged: (value) {
-                          // TODO: Toggle dark mode
-                        },
-                      ),
+                    BlocBuilder<ThemeCubit, ThemeState>(
+                      builder: (context, themeState) {
+                        return _SettingsTile(
+                          icon: Icons.dark_mode_outlined,
+                          title: '다크 모드',
+                          subtitle: '어두운 테마 사용',
+                          trailing: Switch(
+                            value: themeState.isDarkMode,
+                            onChanged: (value) {
+                              context.read<ThemeCubit>().setThemeMode(
+                                    value ? ThemeMode.dark : ThemeMode.light,
+                                  );
+                            },
+                          ),
+                        );
+                      },
                     ),
-                    _SettingsTile(
-                      icon: Icons.language_outlined,
-                      title: '언어',
-                      subtitle: '한국어',
-                      onTap: () {
-                        // TODO: Language selection
+                    BlocBuilder<LocaleCubit, LocaleState>(
+                      builder: (context, localeState) {
+                        return _SettingsTile(
+                          icon: Icons.language_outlined,
+                          title: '언어',
+                          subtitle: localeState.displayName,
+                          onTap: () => _showLanguageSelection(context),
+                        );
                       },
                     ),
                   ],
@@ -143,23 +153,17 @@ class SettingsScreen extends StatelessWidget {
                     _SettingsTile(
                       icon: Icons.help_outline,
                       title: '도움말',
-                      onTap: () {
-                        // TODO: Help page
-                      },
+                      onTap: () => context.push('/help'),
                     ),
                     _SettingsTile(
                       icon: Icons.policy_outlined,
                       title: '개인정보처리방침',
-                      onTap: () {
-                        // TODO: Privacy policy
-                      },
+                      onTap: () => context.push('/privacy-policy'),
                     ),
                     _SettingsTile(
                       icon: Icons.description_outlined,
                       title: '이용약관',
-                      onTap: () {
-                        // TODO: Terms of service
-                      },
+                      onTap: () => context.push('/terms-of-service'),
                     ),
                     const _SettingsTile(
                       icon: Icons.info_outline,
@@ -192,6 +196,45 @@ class SettingsScreen extends StatelessWidget {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageSelection(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (bottomSheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('한국어'),
+              trailing:
+                  context.read<LocaleCubit>().state.locale.languageCode == 'ko'
+                      ? const Icon(Icons.check)
+                      : null,
+              onTap: () {
+                context
+                    .read<LocaleCubit>()
+                    .setLocale(const Locale('ko', 'KR'));
+                Navigator.pop(bottomSheetContext);
+              },
+            ),
+            ListTile(
+              title: const Text('English'),
+              trailing:
+                  context.read<LocaleCubit>().state.locale.languageCode == 'en'
+                      ? const Icon(Icons.check)
+                      : null,
+              onTap: () {
+                context
+                    .read<LocaleCubit>()
+                    .setLocale(const Locale('en', 'US'));
+                Navigator.pop(bottomSheetContext);
+              },
+            ),
+          ],
         ),
       ),
     );

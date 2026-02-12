@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:talk_flutter/domain/entities/user.dart';
@@ -83,6 +85,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       final user = await _userRepository.updateProfile(
         nickname: event.nickname,
         gender: event.gender,
+        profileImage: event.profileImage,
       );
       emit(state.copyWith(
         status: UserBlocStatus.success,

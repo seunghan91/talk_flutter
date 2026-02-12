@@ -7,6 +7,7 @@ import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:go_router/go_router.dart';
 import 'package:talk_flutter/core/constants/app_constants.dart';
 import 'package:talk_flutter/data/database/app_database.dart';
 import 'package:talk_flutter/data/datasources/local/secure_storage_datasource.dart';
@@ -167,6 +168,9 @@ void main() async {
     apiClient: apiClient,
   );
 
+  // Create router with auth-aware refresh
+  final router = createAppRouter(authBloc);
+
   runApp(
     TalkApp(
       authBloc: authBloc,
@@ -178,6 +182,7 @@ void main() async {
       walletRepository: walletRepository,
       feedbackRepository: feedbackRepository,
       audioCacheService: audioCacheService,
+      router: router,
     ),
   );
 }
@@ -193,6 +198,7 @@ class TalkApp extends StatelessWidget {
   final WalletRepository walletRepository;
   final FeedbackRepository feedbackRepository;
   final AudioCacheService audioCacheService;
+  final GoRouter router;
 
   const TalkApp({
     super.key,
@@ -205,6 +211,7 @@ class TalkApp extends StatelessWidget {
     required this.walletRepository,
     required this.feedbackRepository,
     required this.audioCacheService,
+    required this.router,
   });
 
   @override
@@ -262,7 +269,7 @@ class TalkApp extends StatelessWidget {
             ),
           ),
         ],
-        child: const _TalkAppView(),
+        child: _TalkAppView(router: router),
       ),
     );
   }
@@ -270,7 +277,9 @@ class TalkApp extends StatelessWidget {
 
 /// App view with MaterialApp
 class _TalkAppView extends StatelessWidget {
-  const _TalkAppView();
+  final GoRouter router;
+
+  const _TalkAppView({required this.router});
 
   @override
   Widget build(BuildContext context) {
@@ -282,7 +291,7 @@ class _TalkAppView extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeState.themeMode,
-          routerConfig: appRouter,
+          routerConfig: router,
         );
       },
     );

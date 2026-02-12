@@ -5,6 +5,7 @@ import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/domain/entities/broadcast.dart';
 import 'package:talk_flutter/domain/repositories/broadcast_repository.dart';
 import 'package:talk_flutter/presentation/blocs/broadcast/broadcast_bloc.dart';
+import 'package:talk_flutter/presentation/blocs/user/user_bloc.dart';
 import 'package:talk_flutter/presentation/widgets/voice_message_player.dart';
 
 /// Broadcast detail screen - shows a single broadcast with audio player
@@ -176,6 +177,8 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
                     VoiceMessagePlayer(
                       audioUrl: broadcast.audioUrl!,
                       durationSeconds: broadcast.duration,
+                      sourceType: 'broadcast',
+                      sourceId: broadcast.id,
                     ),
                   ],
                 ),
@@ -270,7 +273,9 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Implement block functionality
+              context.read<UserBloc>().add(
+                    UserBlockRequested(userId: _broadcast!.userId),
+                  );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('사용자를 차단했습니다.')),
               );
