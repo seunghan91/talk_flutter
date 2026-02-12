@@ -36,11 +36,7 @@ class VoiceRecordingService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    _recorderController = RecorderController()
-      ..androidEncoder = AndroidEncoder.aac
-      ..androidOutputFormat = AndroidOutputFormat.mpeg4
-      ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
-      ..sampleRate = 44100;
+    _recorderController = RecorderController();
 
     _playerController = PlayerController();
     _isInitialized = true;
@@ -122,8 +118,19 @@ class VoiceRecordingService {
       final uuid = const Uuid().v4();
       _currentRecordingPath = '${directory.path}/recording_$uuid.m4a';
 
-      // Start recording
-      await _recorderController?.record(path: _currentRecordingPath!);
+      // Start recording with AAC encoder settings
+      await _recorderController?.record(
+        path: _currentRecordingPath!,
+        recorderSettings: const RecorderSettings(
+          androidEncoderSettings: AndroidEncoderSettings(
+            androidEncoder: AndroidEncoder.aacLc,
+          ),
+          iosEncoderSettings: IosEncoderSetting(
+            iosEncoder: IosEncoder.kAudioFormatMPEG4AAC,
+          ),
+          sampleRate: 44100,
+        ),
+      );
 
       return RecordingStartResult(
         success: true,
@@ -250,7 +257,8 @@ class VoiceRecordingService {
   /// Get waveform data from a file
   Future<List<double>?> extractWaveformData(String path) async {
     try {
-      final waveformData = await _playerController?.extractWaveformData(
+      final waveformData = await _playerController?.waveformExtraction
+          .extractWaveformData(
         path: path,
         noOfSamples: 100,
       );

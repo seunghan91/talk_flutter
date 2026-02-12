@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:talk_flutter/core/theme/theme.dart';
+import 'package:talk_flutter/data/services/audio_cache_service.dart';
 
 /// Voice message player widget with waveform visualization
 /// Used for playing back recorded voice messages in conversations
@@ -10,6 +12,8 @@ class VoiceMessagePlayer extends StatefulWidget {
   final int? durationSeconds;
   final bool isSentByMe;
   final VoidCallback? onPlayStateChanged;
+  final String? sourceType;
+  final int? sourceId;
 
   const VoiceMessagePlayer({
     super.key,
@@ -17,6 +21,8 @@ class VoiceMessagePlayer extends StatefulWidget {
     this.durationSeconds,
     this.isSentByMe = false,
     this.onPlayStateChanged,
+    this.sourceType,
+    this.sourceId,
   });
 
   @override
@@ -26,6 +32,7 @@ class VoiceMessagePlayer extends StatefulWidget {
 class _VoiceMessagePlayerState extends State<VoiceMessagePlayer> {
   late PlayerController _playerController;
   StreamSubscription<PlayerState>? _playerStateSubscription;
+  StreamSubscription<int>? _durationSubscription;
 
   bool _isPlaying = false;
   bool _isPrepared = false;
@@ -42,8 +49,22 @@ class _VoiceMessagePlayerState extends State<VoiceMessagePlayer> {
 
   Future<void> _initializePlayer() async {
     try {
+      String audioPath = widget.audioUrl;
+      if (widget.sourceType != null && widget.sourceId != null) {
+        try {
+          final cacheService = context.read<AudioCacheService>();
+          audioPath = await cacheService.resolveAudioPath(
+            sourceType: widget.sourceType!,
+            sourceId: widget.sourceId!,
+            remoteUrl: widget.audioUrl,
+          );
+        } catch (_) {
+          // Fall back to remote URL on any error
+        }
+      }
+
       await _playerController.preparePlayer(
-        path: widget.audioUrl,
+        path: audioPath,
         shouldExtractWaveform: true,
         noOfSamples: 50,
       );
@@ -64,7 +85,7 @@ class _VoiceMessagePlayerState extends State<VoiceMessagePlayer> {
         }
       });
 
-      _playerController.onCurrentDurationChanged.listen((duration) {
+      _durationSubscription = _playerController.onCurrentDurationChanged.listen((duration) {
         if (!mounted) return;
         setState(() {
           _currentPosition = duration;
@@ -84,6 +105,7 @@ class _VoiceMessagePlayerState extends State<VoiceMessagePlayer> {
   @override
   void dispose() {
     _playerStateSubscription?.cancel();
+    _durationSubscription?.cancel();
     _playerController.dispose();
     super.dispose();
   }

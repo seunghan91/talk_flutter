@@ -8,26 +8,35 @@ import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:talk_flutter/core/constants/app_constants.dart';
+import 'package:talk_flutter/data/database/app_database.dart';
 import 'package:talk_flutter/data/datasources/local/secure_storage_datasource.dart';
 import 'package:talk_flutter/data/datasources/remote/api_client.dart';
 import 'package:talk_flutter/data/datasources/remote/dio_client.dart';
 import 'package:talk_flutter/data/repositories/auth_repository_impl.dart';
 import 'package:talk_flutter/data/repositories/broadcast_repository_impl.dart';
+import 'package:talk_flutter/data/repositories/cached_broadcast_repository.dart';
+import 'package:talk_flutter/data/services/audio_cache_service.dart';
+import 'package:talk_flutter/data/repositories/cached_conversation_repository.dart';
 import 'package:talk_flutter/data/repositories/conversation_repository_impl.dart';
+import 'package:talk_flutter/data/repositories/feedback_repository_impl.dart';
 import 'package:talk_flutter/data/repositories/notification_repository_impl.dart';
 import 'package:talk_flutter/data/repositories/user_repository_impl.dart';
 import 'package:talk_flutter/data/repositories/wallet_repository_impl.dart';
 import 'package:talk_flutter/domain/repositories/auth_repository.dart';
 import 'package:talk_flutter/domain/repositories/broadcast_repository.dart';
 import 'package:talk_flutter/domain/repositories/conversation_repository.dart';
+import 'package:talk_flutter/domain/repositories/feedback_repository.dart';
 import 'package:talk_flutter/domain/repositories/notification_repository.dart';
 import 'package:talk_flutter/domain/repositories/user_repository.dart';
 import 'package:talk_flutter/domain/repositories/wallet_repository.dart';
 import 'package:talk_flutter/presentation/blocs/auth/auth_bloc.dart';
 import 'package:talk_flutter/presentation/blocs/broadcast/broadcast_bloc.dart';
 import 'package:talk_flutter/presentation/blocs/conversation/conversation_bloc.dart';
+import 'package:talk_flutter/presentation/blocs/feedback/feedback_bloc.dart';
+import 'package:talk_flutter/presentation/blocs/locale/locale_cubit.dart';
 import 'package:talk_flutter/presentation/blocs/notification/notification_bloc.dart';
 import 'package:talk_flutter/presentation/blocs/notification/notification_event.dart';
+import 'package:talk_flutter/presentation/blocs/theme/theme_cubit.dart';
 import 'package:talk_flutter/presentation/blocs/user/user_bloc.dart';
 import 'package:talk_flutter/presentation/blocs/wallet/wallet_bloc.dart';
 import 'package:talk_flutter/core/theme/app_theme.dart';
@@ -112,16 +121,38 @@ void main() async {
 
   final userRepository = UserRepositoryImpl(
     apiClient: apiClient,
+    dio: dioClient.dio,
   );
 
-  final broadcastRepository = BroadcastRepositoryImpl(
+  final broadcastRepositoryImpl = BroadcastRepositoryImpl(
     apiClient: apiClient,
     dio: dioClient.dio,
   );
 
-  final conversationRepository = ConversationRepositoryImpl(
+  // Initialize database and audio cache
+  final appDatabase = AppDatabase();
+  final audioCacheService = await AudioCacheService.create(
+    appDatabase,
+    dioClient.dio,
+  );
+
+  // Wrap broadcast repository with caching decorator
+  final broadcastRepository = CachedBroadcastRepository(
+    inner: broadcastRepositoryImpl,
+    cacheService: audioCacheService,
+  );
+
+  // Cleanup expired cache on startup (fire and forget)
+  audioCacheService.cleanupExpired();
+
+  final conversationRepositoryImpl = ConversationRepositoryImpl(
     apiClient: apiClient,
     dio: dioClient.dio,
+  );
+
+  final conversationRepository = CachedConversationRepository(
+    inner: conversationRepositoryImpl,
+    cacheService: audioCacheService,
   );
 
   final notificationRepository = NotificationRepositoryImpl(
@@ -129,6 +160,10 @@ void main() async {
   );
 
   final walletRepository = WalletRepositoryImpl(
+    apiClient: apiClient,
+  );
+
+  final feedbackRepository = FeedbackRepositoryImpl(
     apiClient: apiClient,
   );
 
@@ -141,6 +176,8 @@ void main() async {
       conversationRepository: conversationRepository,
       notificationRepository: notificationRepository,
       walletRepository: walletRepository,
+      feedbackRepository: feedbackRepository,
+      audioCacheService: audioCacheService,
     ),
   );
 }
@@ -154,6 +191,8 @@ class TalkApp extends StatelessWidget {
   final ConversationRepository conversationRepository;
   final NotificationRepository notificationRepository;
   final WalletRepository walletRepository;
+  final FeedbackRepository feedbackRepository;
+  final AudioCacheService audioCacheService;
 
   const TalkApp({
     super.key,
@@ -164,6 +203,8 @@ class TalkApp extends StatelessWidget {
     required this.conversationRepository,
     required this.notificationRepository,
     required this.walletRepository,
+    required this.feedbackRepository,
+    required this.audioCacheService,
   });
 
   @override
@@ -176,9 +217,17 @@ class TalkApp extends StatelessWidget {
         RepositoryProvider<ConversationRepository>.value(value: conversationRepository),
         RepositoryProvider<NotificationRepository>.value(value: notificationRepository),
         RepositoryProvider<WalletRepository>.value(value: walletRepository),
+        RepositoryProvider<FeedbackRepository>.value(value: feedbackRepository),
+        RepositoryProvider<AudioCacheService>.value(value: audioCacheService),
       ],
       child: MultiBlocProvider(
         providers: [
+          BlocProvider<ThemeCubit>(
+            create: (context) => ThemeCubit(),
+          ),
+          BlocProvider<LocaleCubit>(
+            create: (context) => LocaleCubit(),
+          ),
           BlocProvider<AuthBloc>.value(
             value: authBloc..add(const AuthAppStarted()),
           ),
@@ -207,6 +256,11 @@ class TalkApp extends StatelessWidget {
               walletRepository: walletRepository,
             ),
           ),
+          BlocProvider<FeedbackBloc>(
+            create: (context) => FeedbackBloc(
+              feedbackRepository: feedbackRepository,
+            ),
+          ),
         ],
         child: const _TalkAppView(),
       ),
@@ -220,12 +274,17 @@ class _TalkAppView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Talkk',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      routerConfig: appRouter,
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        return MaterialApp.router(
+          title: 'Talkk',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeState.themeMode,
+          routerConfig: appRouter,
+        );
+      },
     );
   }
 }
