@@ -88,6 +88,9 @@ abstract class ApiClient {
   @GET('/broadcasts/received')
   Future<HttpResponse<dynamic>> getReceivedBroadcasts();
 
+  @GET('/broadcasts/limits')
+  Future<HttpResponse<dynamic>> getBroadcastLimits();
+
   @GET('/broadcasts/{id}')
   Future<HttpResponse<dynamic>> getBroadcastById(@Path() int id);
 

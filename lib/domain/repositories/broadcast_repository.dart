@@ -1,4 +1,5 @@
 import 'package:talk_flutter/domain/entities/broadcast.dart';
+import 'package:talk_flutter/domain/entities/broadcast_limits.dart';
 
 /// Broadcast repository interface - Domain layer
 abstract class BroadcastRepository {
@@ -14,6 +15,7 @@ abstract class BroadcastRepository {
     required int duration,
     int recipientCount = 5,
     String? content,
+    String? targetGender,
   });
 
   /// Reply to a broadcast (creates conversation)
@@ -25,4 +27,7 @@ abstract class BroadcastRepository {
 
   /// Mark broadcast as listened
   Future<void> markAsListened(int broadcastId);
+
+  /// Get broadcast sending limits for current user
+  Future<BroadcastLimits> getBroadcastLimits();
 }

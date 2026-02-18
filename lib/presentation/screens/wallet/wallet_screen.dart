@@ -28,7 +28,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('지갑'),
+        title: const Text('코인 지갑'),
       ),
       body: SafeArea(
         child: BlocConsumer<WalletBloc, WalletState>(
@@ -129,7 +129,7 @@ class _WalletScreenState extends State<WalletScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('충전'),
+                title: const Text('코인 충전'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -137,7 +137,7 @@ class _WalletScreenState extends State<WalletScreen> {
               controller: amountController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: '충전 금액',
+                labelText: '충전 코인',
                 prefixText: '\u20a9 ',
                 border: OutlineInputBorder(),
               ),
@@ -228,7 +228,7 @@ class _BalanceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '잔액',
+            '보유 코인',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onPrimary.withValues(alpha: 0.8),
                 ),
@@ -250,7 +250,7 @@ class _BalanceCard extends StatelessWidget {
                 backgroundColor: colorScheme.onPrimary,
                 foregroundColor: colorScheme.primary,
               ),
-              child: const Text('충전하기'),
+              child: const Text('코인 충전'),
             ),
           ),
         ],

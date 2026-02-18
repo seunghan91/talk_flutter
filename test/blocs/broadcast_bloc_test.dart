@@ -157,7 +157,9 @@ void main() {
         )),
         expect: () => [
           const BroadcastState(status: BroadcastStatus.creating),
-          const BroadcastState(status: BroadcastStatus.loaded),
+          isA<BroadcastState>()
+              .having((s) => s.status, 'status', BroadcastStatus.loaded)
+              .having((s) => s.createSucceeded, 'createSucceeded', true),
           // List refresh will add loading state
           isA<BroadcastState>().having((s) => s.status, 'status', BroadcastStatus.loading),
           isA<BroadcastState>().having((s) => s.status, 'status', BroadcastStatus.loaded),

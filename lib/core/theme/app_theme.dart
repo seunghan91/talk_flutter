@@ -65,13 +65,13 @@ class AppTheme {
         ),
       ),
 
-      // Cards
+      // Cards (Design System)
       cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.cardRadius,
           side: BorderSide(
-            color: AppColors.neutral200,
+            color: AppColors.border,
             width: 1,
           ),
         ),
@@ -125,10 +125,10 @@ class AppTheme {
         ),
       ),
 
-      // Input Decoration
+      // Input Decoration (Design System)
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.neutral100,
+        fillColor: AppColors.inputBackground,
         contentPadding: AppSpacing.inputPadding,
         border: OutlineInputBorder(
           borderRadius: AppRadius.inputRadius,
@@ -136,7 +136,7 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: AppRadius.inputRadius,
-          borderSide: BorderSide(color: AppColors.neutral200),
+          borderSide: BorderSide(color: AppColors.border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadius.inputRadius,
@@ -150,11 +150,44 @@ class AppTheme {
           borderRadius: AppRadius.inputRadius,
           borderSide: BorderSide(color: AppColors.error, width: 2),
         ),
-        labelStyle: TextStyle(color: AppColors.textSecondaryLight),
+        labelStyle: TextStyle(color: AppColors.mutedForeground),
         hintStyle: TextStyle(color: AppColors.textTertiaryLight),
       ),
 
-      // Bottom Navigation Bar
+      // Navigation Bar (Material 3)
+      navigationBarTheme: NavigationBarThemeData(
+        height: 80,
+        backgroundColor: AppColors.surfaceLight,
+        indicatorColor: AppColors.muted,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.primary,
+            );
+          }
+          return const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: AppColors.textTertiaryLight,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(
+              color: AppColors.primary,
+              size: 24,
+            );
+          }
+          return const IconThemeData(
+            color: AppColors.textTertiaryLight,
+            size: 24,
+          );
+        }),
+      ),
+
+      // Bottom Navigation Bar (legacy)
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         backgroundColor: AppColors.surfaceLight,
@@ -216,10 +249,10 @@ class AppTheme {
         ),
       ),
 
-      // Chip
+      // Chip (Design System)
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.neutral100,
-        selectedColor: AppColors.primaryLight.withValues(alpha: 0.2),
+        backgroundColor: AppColors.muted,
+        selectedColor: AppColors.accent,
         labelStyle: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w500,
@@ -259,12 +292,12 @@ class AppTheme {
   // ============ Dark Theme ============
   static ThemeData get darkTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+      seedColor: AppColors.primaryDarkMode,
       brightness: Brightness.dark,
-      primary: AppColors.primaryLight,
-      secondary: AppColors.secondaryLight,
+      primary: AppColors.primaryDarkMode, // #FAFAFA (흰색)
+      secondary: AppColors.secondaryDarkMode, // #404040
       error: AppColors.errorLight,
-      surface: AppColors.surfaceDark,
+      surface: AppColors.surfaceDark, // #252525
     );
 
     return ThemeData(
@@ -312,17 +345,17 @@ class AppTheme {
         ),
       ),
 
-      // Cards
+      // Cards (Dark Mode - Design System)
       cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.cardRadius,
           side: BorderSide(
-            color: AppColors.neutral700,
+            color: AppColors.borderDarkMode, // #404040
             width: 1,
           ),
         ),
-        color: AppColors.cardDark,
+        color: AppColors.cardDark, // #252525
         margin: EdgeInsets.zero,
       ),
 
@@ -372,10 +405,10 @@ class AppTheme {
         ),
       ),
 
-      // Input Decoration
+      // Input Decoration (Dark Mode - Design System)
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.neutral800,
+        fillColor: AppColors.inputBackgroundDarkMode, // #404040
         contentPadding: AppSpacing.inputPadding,
         border: OutlineInputBorder(
           borderRadius: AppRadius.inputRadius,
@@ -383,11 +416,11 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: AppRadius.inputRadius,
-          borderSide: BorderSide(color: AppColors.neutral700),
+          borderSide: BorderSide(color: AppColors.borderDarkMode), // #404040
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadius.inputRadius,
-          borderSide: BorderSide(color: AppColors.primaryLight, width: 2),
+          borderSide: BorderSide(color: AppColors.primaryDarkMode, width: 2), // #FAFAFA
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadius.inputRadius,
@@ -401,7 +434,40 @@ class AppTheme {
         hintStyle: TextStyle(color: AppColors.textTertiaryDark),
       ),
 
-      // Bottom Navigation Bar
+      // Navigation Bar (Material 3 - Dark Mode)
+      navigationBarTheme: NavigationBarThemeData(
+        height: 80,
+        backgroundColor: AppColors.surfaceDark, // #252525
+        indicatorColor: AppColors.mutedDarkMode, // #404040
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.primaryDarkMode, // #FAFAFA
+            );
+          }
+          return const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: AppColors.textTertiaryDark,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(
+              color: AppColors.primaryLight,
+              size: 24,
+            );
+          }
+          return const IconThemeData(
+            color: AppColors.textTertiaryDark,
+            size: 24,
+          );
+        }),
+      ),
+
+      // Bottom Navigation Bar (legacy)
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         backgroundColor: AppColors.surfaceDark,

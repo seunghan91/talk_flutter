@@ -1,5 +1,6 @@
 import 'package:talk_flutter/data/services/audio_cache_service.dart';
 import 'package:talk_flutter/domain/entities/broadcast.dart';
+import 'package:talk_flutter/domain/entities/broadcast_limits.dart';
 import 'package:talk_flutter/domain/repositories/broadcast_repository.dart';
 
 /// Decorator that wraps a BroadcastRepository and caches audio files.
@@ -36,12 +37,14 @@ class CachedBroadcastRepository implements BroadcastRepository {
     required int duration,
     int recipientCount = 5,
     String? content,
+    String? targetGender,
   }) {
     return _inner.createBroadcast(
       audioPath: audioPath,
       duration: duration,
       recipientCount: recipientCount,
       content: content,
+      targetGender: targetGender,
     );
   }
 
@@ -61,6 +64,11 @@ class CachedBroadcastRepository implements BroadcastRepository {
   @override
   Future<void> markAsListened(int broadcastId) {
     return _inner.markAsListened(broadcastId);
+  }
+
+  @override
+  Future<BroadcastLimits> getBroadcastLimits() {
+    return _inner.getBroadcastLimits();
   }
 
   void _backgroundCacheBroadcasts(List<Broadcast> broadcasts) {

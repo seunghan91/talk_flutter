@@ -89,24 +89,24 @@ class AppSpacing {
   static const SizedBox horizontalXxl = SizedBox(width: xxl);
 }
 
-/// App border radius system
+/// App border radius system (Design System: --radius: 14px)
 class AppRadius {
   AppRadius._();
 
-  /// 4px - Small radius
-  static const double xs = 4;
+  /// 6px - Extra small radius
+  static const double xs = 6;
 
-  /// 8px - Medium-small radius
-  static const double sm = 8;
+  /// 10px - Small radius (calc(14 - 4))
+  static const double sm = 10;
 
-  /// 12px - Medium radius
+  /// 12px - Medium radius (calc(14 - 2))
   static const double md = 12;
 
-  /// 16px - Medium-large radius
-  static const double lg = 16;
+  /// 14px - Base radius (design system default)
+  static const double lg = 14;
 
-  /// 20px - Large radius
-  static const double xl = 20;
+  /// 18px - Large radius (calc(14 + 4))
+  static const double xl = 18;
 
   /// 24px - Extra large radius
   static const double xxl = 24;
@@ -121,14 +121,14 @@ class AppRadius {
   static final BorderRadius extraLargeRadius = BorderRadius.circular(xl);
   static final BorderRadius circularRadius = BorderRadius.circular(full);
 
-  /// Card radius
-  static final BorderRadius cardRadius = BorderRadius.circular(md);
+  /// Card radius (14px from design system)
+  static final BorderRadius cardRadius = BorderRadius.circular(lg);
 
-  /// Button radius
-  static final BorderRadius buttonRadius = BorderRadius.circular(sm);
+  /// Button radius (14px from design system)
+  static final BorderRadius buttonRadius = BorderRadius.circular(lg);
 
-  /// Input radius
-  static final BorderRadius inputRadius = BorderRadius.circular(sm);
+  /// Input radius (14px from design system)
+  static final BorderRadius inputRadius = BorderRadius.circular(lg);
 
   /// Avatar radius (circular)
   static final BorderRadius avatarRadius = BorderRadius.circular(full);

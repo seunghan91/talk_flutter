@@ -14,10 +14,12 @@ import 'package:talk_flutter/presentation/screens/conversation/conversation_scre
 import 'package:talk_flutter/presentation/screens/feedback/feedback_screen.dart';
 import 'package:talk_flutter/presentation/screens/home/home_screen.dart';
 import 'package:talk_flutter/presentation/screens/home/main_scaffold.dart';
+import 'package:talk_flutter/presentation/screens/market/market_screen.dart';
 import 'package:talk_flutter/presentation/screens/messages/messages_screen.dart';
 import 'package:talk_flutter/presentation/screens/notifications/notification_screen.dart';
 import 'package:talk_flutter/presentation/screens/profile/profile_screen.dart';
 import 'package:talk_flutter/presentation/screens/profile/profile_edit_screen.dart';
+import 'package:talk_flutter/presentation/screens/rewards/rewards_screen.dart';
 import 'package:talk_flutter/presentation/screens/report/report_user_screen.dart';
 import 'package:talk_flutter/presentation/screens/settings/help_screen.dart';
 import 'package:talk_flutter/presentation/screens/settings/privacy_policy_screen.dart';
@@ -83,17 +85,17 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
           ),
         ),
         GoRoute(
-          path: '/messages',
-          name: 'messages',
+          path: '/chats',
+          name: 'chats',
           pageBuilder: (context, state) => const NoTransitionPage(
             child: MessagesScreen(),
           ),
         ),
         GoRoute(
-          path: '/feedback',
-          name: 'feedback',
+          path: '/market',
+          name: 'market',
           pageBuilder: (context, state) => const NoTransitionPage(
-            child: FeedbackScreen(),
+            child: MarketScreen(),
           ),
         ),
         GoRoute(
@@ -103,17 +105,48 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
             child: SettingsScreen(),
           ),
         ),
+        GoRoute(
+          path: '/rewards',
+          name: 'rewards',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: RewardsScreen(),
+          ),
+        ),
+        // Backward compatibility route
+        GoRoute(
+          path: '/messages',
+          name: 'messages',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: MessagesScreen(),
+          ),
+        ),
       ],
     ),
 
     // ============ Conversation Detail (without bottom navigation) ============
     GoRoute(
-      path: '/messages/:id',
+      path: '/chats/:id',
       name: 'conversation',
       builder: (context, state) {
         final id = state.pathParameters['id']!;
         return ConversationScreen(conversationId: id);
       },
+    ),
+    // Backward compatibility deep link
+    GoRoute(
+      path: '/messages/:id',
+      name: 'conversation-legacy',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return ConversationScreen(conversationId: id);
+      },
+    ),
+
+    // Legacy feedback route kept outside tab IA
+    GoRoute(
+      path: '/feedback',
+      name: 'feedback',
+      builder: (context, state) => const FeedbackScreen(),
     ),
 
     // ============ Profile Edit (without bottom navigation) ============

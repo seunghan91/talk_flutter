@@ -28,33 +28,36 @@ class MainScaffold extends StatelessWidget {
           NavigationDestination(
             icon: Icon(Icons.chat_bubble_outline),
             selectedIcon: Icon(Icons.chat_bubble),
-            label: '메시지',
+            label: '대화',
           ),
           NavigationDestination(
-            icon: Icon(Icons.feedback_outlined),
-            selectedIcon: Icon(Icons.feedback),
-            label: '피드백',
+            icon: Icon(Icons.shopping_bag_outlined),
+            selectedIcon: Icon(Icons.shopping_bag),
+            label: '마켓',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
             selectedIcon: Icon(Icons.settings),
             label: '설정',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.card_giftcard_outlined),
+            selectedIcon: Icon(Icons.card_giftcard),
+            label: '리워드',
+          ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/broadcast/record'),
-        child: const Icon(Icons.mic),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
   int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
-    if (location.startsWith('/messages')) return 1;
-    if (location.startsWith('/feedback')) return 2;
+    if (location.startsWith('/chats') || location.startsWith('/messages')) {
+      return 1;
+    }
+    if (location.startsWith('/market')) return 2;
     if (location.startsWith('/settings')) return 3;
+    if (location.startsWith('/rewards')) return 4;
     return 0;
   }
 
@@ -64,13 +67,16 @@ class MainScaffold extends StatelessWidget {
         context.go('/');
         break;
       case 1:
-        context.go('/messages');
+        context.go('/chats');
         break;
       case 2:
-        context.go('/feedback');
+        context.go('/market');
         break;
       case 3:
         context.go('/settings');
+        break;
+      case 4:
+        context.go('/rewards');
         break;
     }
   }

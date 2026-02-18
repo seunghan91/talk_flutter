@@ -41,8 +41,8 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     _SettingsTile(
                       icon: Icons.account_balance_wallet_outlined,
-                      title: '지갑',
-                      subtitle: '잔액 및 거래 내역',
+                      title: '코인',
+                      subtitle: '보유 코인 및 거래 내역',
                       onTap: () => context.push('/wallet'),
                     ),
                     _SettingsTile(

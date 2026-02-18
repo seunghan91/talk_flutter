@@ -26,7 +26,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('메시지'),
+        title: const Text('대화'),
       ),
       body: BlocBuilder<ConversationBloc, ConversationState>(
           builder: (context, state) {
@@ -67,7 +67,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   return _ConversationTile(
                     conversation: conversation,
                     onTap: () {
-                      context.push('/messages/${conversation.id}');
+                      context.push('/chats/${conversation.id}');
                     },
                     onToggleFavorite: () {
                       context.read<ConversationBloc>().add(
@@ -188,10 +188,15 @@ class _ConversationTile extends StatelessWidget {
             ),
           ],
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(
+              Icons.access_time,
+              size: AppIconSize.xs,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            AppSpacing.horizontalXxs,
             Text(
               _formatDate(conversation.lastMessageAt ?? conversation.createdAt),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -200,25 +205,9 @@ class _ConversationTile extends StatelessWidget {
                         : colorScheme.onSurfaceVariant,
                   ),
             ),
-            AppSpacing.verticalXxs,
-            IconButton(
-              onPressed: onToggleFavorite,
-              icon: Icon(
-                conversation.isFavorite ? Icons.star : Icons.star_border,
-                color: conversation.isFavorite
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
-              ),
-              iconSize: AppIconSize.md,
-              constraints: const BoxConstraints(
-                minWidth: 48,
-                minHeight: 48,
-              ),
-              padding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
-            ),
           ],
         ),
+        onLongPress: onToggleFavorite,
       ),
     );
   }

@@ -6,6 +6,7 @@ part 'wallet_model.g.dart';
 /// Wallet DTO for API communication
 @JsonSerializable()
 class WalletModel {
+  @JsonKey(fromJson: _balanceFromJson)
   final int balance;
   @JsonKey(name: 'transaction_count')
   final int? transactionCount;
@@ -17,6 +18,17 @@ class WalletModel {
     this.transactionCount,
     this.formattedBalance,
   });
+
+  /// Convert balance from String or num to int
+  static int _balanceFromJson(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) {
+      final parsed = double.tryParse(value);
+      return parsed?.toInt() ?? 0;
+    }
+    return 0;
+  }
 
   factory WalletModel.fromJson(Map<String, dynamic> json) =>
       _$WalletModelFromJson(json);
@@ -40,6 +52,7 @@ class WalletTransactionModel {
   final String type;
   @JsonKey(name: 'type_korean')
   final String? typeKorean;
+  @JsonKey(fromJson: _amountFromJson)
   final int amount;
   @JsonKey(name: 'formatted_amount')
   final String? formattedAmount;
@@ -64,6 +77,17 @@ class WalletTransactionModel {
     this.createdAt,
     this.formattedDate,
   });
+
+  /// Convert amount from String or num to int
+  static int _amountFromJson(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) {
+      final parsed = double.tryParse(value);
+      return parsed?.toInt() ?? 0;
+    }
+    return 0;
+  }
 
   factory WalletTransactionModel.fromJson(Map<String, dynamic> json) =>
       _$WalletTransactionModelFromJson(json);

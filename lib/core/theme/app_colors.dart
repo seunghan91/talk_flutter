@@ -4,14 +4,44 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // ============ Brand Colors (Voice Social: Warm Coral/Rose) ============
-  static const Color primary = Color(0xFFE11D48);
-  static const Color primaryLight = Color(0xFFFB7185);
-  static const Color primaryDark = Color(0xFFBE123C);
+  // ============ Brand Colors (Design System) ============
+  /// Primary: #e63946 (강렬한 빨강) - Light mode
+  static const Color primary = Color(0xFFE63946);
+  static const Color primaryLight = Color(0xFFFF6B77);
+  /// Primary Dark mode: oklch(0.985 0 0) → #FAFAFA (흰색)
+  static const Color primaryDarkMode = Color(0xFFFAFAFA);
 
-  static const Color secondary = Color(0xFFF43F5E);
-  static const Color secondaryLight = Color(0xFFFDA4AF);
-  static const Color secondaryDark = Color(0xFFE11D48);
+  /// Secondary: #ffb3ba (연한 분홍) - Light mode
+  static const Color secondary = Color(0xFFFFB3BA);
+  static const Color secondaryLight = Color(0xFFFFD4D8);
+  /// Secondary Dark mode: oklch(0.269 0 0) → #404040
+  static const Color secondaryDarkMode = Color(0xFF404040);
+
+  /// Muted: #fff0f0 (매우 연한 분홍 배경) - Light mode
+  static const Color muted = Color(0xFFFFF0F0);
+  static const Color mutedForeground = Color(0xFF8B6B6B);
+  /// Muted Dark mode: oklch(0.269 0 0) → #404040
+  static const Color mutedDarkMode = Color(0xFF404040);
+  /// Muted Foreground Dark mode: oklch(0.708 0 0) → #B3B3B3
+  static const Color mutedForegroundDarkMode = Color(0xFFB3B3B3);
+
+  /// Accent: #ffd4d8 (연한 핑크 강조색) - Light mode
+  static const Color accent = Color(0xFFFFD4D8);
+  static const Color accentForeground = Color(0xFF2D1B1B);
+  /// Accent Dark mode: oklch(0.269 0 0) → #404040
+  static const Color accentDarkMode = Color(0xFF404040);
+  /// Accent Foreground Dark mode: oklch(0.985 0 0) → #FAFAFA
+  static const Color accentForegroundDarkMode = Color(0xFFFAFAFA);
+
+  /// Input background: #fff5f5 - Light mode
+  static const Color inputBackground = Color(0xFFFFF5F5);
+  /// Input background Dark mode: oklch(0.269 0 0) → #404040
+  static const Color inputBackgroundDarkMode = Color(0xFF404040);
+
+  /// Border: rgba(230, 57, 70, 0.15) - Light mode
+  static const Color border = Color(0x26E63946);
+  /// Border Dark mode: oklch(0.269 0 0) → #404040
+  static const Color borderDarkMode = Color(0xFF404040);
 
   // ============ Semantic Colors ============
   static const Color success = Color(0xFF10B981);
@@ -50,22 +80,30 @@ class AppColors {
   static const Color neutral800 = Color(0xFF262626);
   static const Color neutral900 = Color(0xFF171717);
 
-  // ============ Background Colors ============
-  static const Color backgroundLight = Color(0xFFFAFAFA);
-  static const Color backgroundDark = Color(0xFF121212);
+  // ============ Background Colors (Design System) ============
+  /// Light mode: #ffffff (순백)
+  static const Color backgroundLight = Color(0xFFFFFFFF);
+  /// Dark mode: oklch(0.145 0 0) → #252525
+  static const Color backgroundDark = Color(0xFF252525);
 
+  /// Surface: 카드/팝오버 배경
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceDark = Color(0xFF1E1E1E);
+  /// Dark mode: oklch(0.145 0 0) → #252525
+  static const Color surfaceDark = Color(0xFF252525);
 
+  /// Card: 카드 배경
   static const Color cardLight = Color(0xFFFFFFFF);
-  static const Color cardDark = Color(0xFF2D2D2D);
+  /// Dark mode: oklch(0.145 0 0) → #252525
+  static const Color cardDark = Color(0xFF252525);
 
   // ============ Text Colors ============
-  static const Color textPrimaryLight = Color(0xFF171717);
-  static const Color textSecondaryLight = Color(0xFF525252);
-  static const Color textTertiaryLight = Color(0xFF737373);
-  static const Color textDisabledLight = Color(0xFF8A8A8A); // WCAG compliant
+  /// Light mode: #2d1b1b (어두운 갈색)
+  static const Color textPrimaryLight = Color(0xFF2D1B1B);
+  static const Color textSecondaryLight = Color(0xFF8B6B6B);
+  static const Color textTertiaryLight = Color(0xFFA89A9A);
+  static const Color textDisabledLight = Color(0xFFC4BABA); // WCAG compliant
 
+  /// Dark mode: 흰색 계열
   static const Color textPrimaryDark = Color(0xFFFAFAFA);
   static const Color textSecondaryDark = Color(0xFFD4D4D4);
   static const Color textTertiaryDark = Color(0xFFA3A3A3);
@@ -94,7 +132,14 @@ class AppColors {
   static const Color offline = neutral400;
   static const Color unread = primary;
   static const Color expiring = warning;
+
+  // ============ Shadow Colors (for boxShadow) ============
+  /// Light mode: 약한 검은색 그림자
+  static const Color shadowLight = Color(0x0F000000); // alpha: 0.06
+  /// Dark mode: 조금 더 진한 검은색 그림자
+  static const Color shadowDark = Color(0x3D000000); // alpha: 0.24
 }
+
 
 /// Extension for easy color access from BuildContext
 extension AppColorsExtension on BuildContext {
@@ -117,4 +162,36 @@ extension AppColorsExtension on BuildContext {
 
   Color get cardColor =>
       isDarkMode ? AppColors.cardDark : AppColors.cardLight;
+
+  /// Get appropriate shadow color based on theme
+  Color get shadowColor =>
+      isDarkMode ? AppColors.shadowDark : AppColors.shadowLight;
+
+  /// Get appropriate primary color based on theme
+  Color get primaryColor =>
+      isDarkMode ? AppColors.primaryDarkMode : AppColors.primary;
+
+  /// Get appropriate secondary color based on theme
+  Color get secondaryColor =>
+      isDarkMode ? AppColors.secondaryDarkMode : AppColors.secondary;
+
+  /// Get appropriate muted color based on theme
+  Color get mutedColor =>
+      isDarkMode ? AppColors.mutedDarkMode : AppColors.muted;
+
+  /// Get appropriate muted foreground color based on theme
+  Color get mutedForegroundColor =>
+      isDarkMode ? AppColors.mutedForegroundDarkMode : AppColors.mutedForeground;
+
+  /// Get appropriate accent color based on theme
+  Color get accentColor =>
+      isDarkMode ? AppColors.accentDarkMode : AppColors.accent;
+
+  /// Get appropriate border color based on theme
+  Color get borderColor =>
+      isDarkMode ? AppColors.borderDarkMode : AppColors.border;
+
+  /// Get appropriate input background color based on theme
+  Color get inputBgColor =>
+      isDarkMode ? AppColors.inputBackgroundDarkMode : AppColors.inputBackground;
 }

@@ -166,13 +166,6 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
       recipientCount: 5, // Default recipient count
     ));
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('브로드캐스트를 전송 중입니다...'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
-    );
-
     context.pop();
   }
 
