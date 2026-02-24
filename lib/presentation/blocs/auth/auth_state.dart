@@ -8,6 +8,7 @@ class AuthState extends Equatable {
   final bool isCodeSent;
   final bool isCodeVerified;
   final String? errorMessage;
+  final String? verificationId; // Firebase verificationId
 
   const AuthState({
     this.status = AuthStatus.initial,
@@ -16,6 +17,7 @@ class AuthState extends Equatable {
     this.isCodeSent = false,
     this.isCodeVerified = false,
     this.errorMessage,
+    this.verificationId,
   });
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
@@ -29,6 +31,7 @@ class AuthState extends Equatable {
     bool? isCodeSent,
     bool? isCodeVerified,
     String? errorMessage,
+    String? verificationId,
     bool clearError = false,
   }) {
     return AuthState(
@@ -38,6 +41,7 @@ class AuthState extends Equatable {
       isCodeSent: isCodeSent ?? this.isCodeSent,
       isCodeVerified: isCodeVerified ?? this.isCodeVerified,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      verificationId: verificationId ?? this.verificationId,
     );
   }
 
@@ -49,5 +53,6 @@ class AuthState extends Equatable {
         isCodeSent,
         isCodeVerified,
         errorMessage,
+        verificationId,
       ];
 }

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:talk_flutter/core/enums/app_enums.dart';
@@ -53,7 +54,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Request SMS verification code
+  /// Request SMS verification code via Firebase
   Future<void> _onRequestCodeRequested(
     AuthRequestCodeRequested event,
     Emitter<AuthState> emit,
@@ -61,21 +62,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(state.copyWith(status: AuthStatus.loading, clearError: true));
 
     try {
-      await _authRepository.requestVerificationCode(event.phoneNumber);
+      final verificationId =
+          await _authRepository.requestVerificationCode(event.phoneNumber);
       emit(state.copyWith(
         status: AuthStatus.unauthenticated,
         phoneNumber: event.phoneNumber,
         isCodeSent: true,
+        verificationId: verificationId,
       ));
     } catch (e) {
       emit(state.copyWith(
         status: AuthStatus.error,
-        errorMessage: _getErrorMessage(e),
+        errorMessage: _getFirebaseErrorMessage(e),
       ));
     }
   }
 
-  /// Verify SMS code
+  /// Verify SMS code via Firebase
   Future<void> _onVerifyCodeRequested(
     AuthVerifyCodeRequested event,
     Emitter<AuthState> emit,
@@ -83,9 +86,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(state.copyWith(status: AuthStatus.loading, clearError: true));
 
     try {
+      final verificationId = state.verificationId ?? '';
       final verified = await _authRepository.verifyCode(
         event.phoneNumber,
         event.code,
+        verificationId,
       );
 
       emit(state.copyWith(
@@ -95,7 +100,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       emit(state.copyWith(
         status: AuthStatus.error,
-        errorMessage: _getErrorMessage(e),
+        errorMessage: _getFirebaseErrorMessage(e),
       ));
     }
   }
@@ -193,5 +198,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     // Fallback for unknown errors
     return const UnknownFailure().toUserMessage();
+  }
+
+  /// Convert Firebase/API exception to user-friendly message
+  String _getFirebaseErrorMessage(dynamic error) {
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'invalid-verification-code':
+          return '인증 코드가 올바르지 않습니다.';
+        case 'session-expired':
+          return '인증 시간이 초과되었습니다. 다시 시도해주세요.';
+        case 'too-many-requests':
+          return '너무 많은 요청이 있었습니다. 잠시 후 다시 시도해주세요.';
+        case 'invalid-phone-number':
+          return '올바르지 않은 전화번호입니다.';
+        default:
+          return '인증 중 오류가 발생했습니다: ${error.message}';
+      }
+    }
+    return _getErrorMessage(error);
   }
 }

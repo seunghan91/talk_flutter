@@ -2,11 +2,11 @@ import 'package:talk_flutter/domain/entities/user.dart';
 
 /// Auth repository interface - Domain layer
 abstract class AuthRepository {
-  /// Request SMS verification code
-  Future<void> requestVerificationCode(String phoneNumber);
+  /// Request SMS verification code via Firebase. Returns verificationId.
+  Future<String> requestVerificationCode(String phoneNumber);
 
-  /// Verify SMS code
-  Future<bool> verifyCode(String phoneNumber, String code);
+  /// Verify SMS code via Firebase. Returns true on success.
+  Future<bool> verifyCode(String phoneNumber, String code, String verificationId);
 
   /// Register new user
   Future<User> register({

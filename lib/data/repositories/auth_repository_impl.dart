@@ -1,3 +1,4 @@
+import 'package:talk_flutter/core/services/firebase_phone_auth_service.dart';
 import 'package:talk_flutter/data/datasources/local/secure_storage_datasource.dart';
 import 'package:talk_flutter/data/datasources/remote/api_client.dart';
 import 'package:talk_flutter/data/models/auth_response_model.dart';
@@ -5,33 +6,39 @@ import 'package:talk_flutter/data/models/user_model.dart';
 import 'package:talk_flutter/domain/entities/user.dart';
 import 'package:talk_flutter/domain/repositories/auth_repository.dart';
 
-/// Auth repository implementation
+/// Auth repository implementation using Firebase Phone Auth
 class AuthRepositoryImpl implements AuthRepository {
   final ApiClient _apiClient;
   final SecureStorageDatasource _secureStorage;
+  final FirebasePhoneAuthService _firebasePhoneAuth;
 
   AuthRepositoryImpl({
     required ApiClient apiClient,
     required SecureStorageDatasource secureStorage,
+    FirebasePhoneAuthService? firebasePhoneAuth,
   })  : _apiClient = apiClient,
-        _secureStorage = secureStorage;
+        _secureStorage = secureStorage,
+        _firebasePhoneAuth = firebasePhoneAuth ?? FirebasePhoneAuthService();
 
   @override
-  Future<void> requestVerificationCode(String phoneNumber) async {
-    await _apiClient.requestVerificationCode({
-      'phone_number': phoneNumber,
-    });
+  Future<String> requestVerificationCode(String phoneNumber) async {
+    return await _firebasePhoneAuth.sendVerificationCode(phoneNumber);
   }
 
   @override
-  Future<bool> verifyCode(String phoneNumber, String code) async {
-    final response = await _apiClient.verifyCode({
-      'phone_number': phoneNumber,
-      'code': code,
-    });
-    final data = response.data as Map<String, dynamic>? ?? {};
-    final verificationResponse = VerificationResponseModel.fromJson(data);
-    return verificationResponse.verified == true;
+  Future<bool> verifyCode(
+      String phoneNumber, String code, String verificationId) async {
+    // 1. Verify with Firebase → get ID token
+    final firebaseToken =
+        await _firebasePhoneAuth.verifyCodeAndGetToken(verificationId, code);
+
+    // 2. Send Firebase token to Rails → marks phone as verified
+    await _apiClient.firebaseVerifyPhone({'firebase_token': firebaseToken});
+
+    // 3. Sign out from Firebase (Rails manages session from here)
+    await _firebasePhoneAuth.signOut();
+
+    return true;
   }
 
   @override
@@ -41,22 +48,25 @@ class AuthRepositoryImpl implements AuthRepository {
     required String nickname,
     String? gender,
   }) async {
-    final response = await _apiClient.register({
-      'phone_number': phoneNumber,
-      'password': password,
-      'nickname': nickname,
-      if (gender != null) 'gender': gender,
-    });
+    final body = {
+      'user': {
+        'phone_number': phoneNumber,
+        'password': password,
+        'password_confirmation': password,
+        'nickname': nickname,
+        if (gender != null) 'gender': gender,
+      },
+    };
+
+    final response = await _apiClient.register(body);
 
     final data = response.data as Map<String, dynamic>? ?? {};
     final authResponse = AuthResponseModel.fromJson(data);
 
-    // Save auth tokens
     if (authResponse.token != null) {
       await _secureStorage.saveAccessToken(authResponse.token!);
     }
 
-    // Parse and save user
     if (authResponse.user == null) {
       throw Exception('User data is missing from response');
     }
@@ -81,12 +91,10 @@ class AuthRepositoryImpl implements AuthRepository {
     final data = response.data as Map<String, dynamic>? ?? {};
     final authResponse = AuthResponseModel.fromJson(data);
 
-    // Save auth tokens
     if (authResponse.token != null) {
       await _secureStorage.saveAccessToken(authResponse.token!);
     }
 
-    // Parse and save user
     if (authResponse.user == null) {
       throw Exception('User data is missing from response');
     }
@@ -109,14 +117,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<User?> getCurrentUser() async {
-    // Try to get from local storage first
     final userData = await _secureStorage.getUserData();
     if (userData != null) {
       final userModel = UserModel.fromJson(userData);
       return userModel.toEntity();
     }
 
-    // Fetch from API if not cached
     final hasToken = await _secureStorage.hasAccessToken();
     if (!hasToken) return null;
 
@@ -141,8 +147,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> refreshToken() async {
-    // API does not support token refresh
-    // Clear auth data and require re-login
     await clearAuthData();
   }
 

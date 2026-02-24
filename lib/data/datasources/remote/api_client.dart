@@ -16,6 +16,9 @@ abstract class ApiClient {
   @POST('/auth/phone_verifications/verify')
   Future<HttpResponse<dynamic>> verifyCode(@Body() Map<String, dynamic> body);
 
+  @POST('/auth/phone_verifications/firebase_verify')
+  Future<HttpResponse<dynamic>> firebaseVerifyPhone(@Body() Map<String, dynamic> body);
+
   @POST('/auth/registrations')
   Future<HttpResponse<dynamic>> register(@Body() Map<String, dynamic> body);
 
