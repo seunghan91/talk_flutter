@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Talk Flutter</string>
+	<string>보이스팅</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>talk_flutter</string>
+	<string>Talkk</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -31,8 +31,6 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
@@ -45,8 +43,46 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<!-- Microphone permission for voice recording -->
+
+	<!-- Microphone: voice recording & broadcast -->
 	<key>NSMicrophoneUsageDescription</key>
-	<string>음성 메시지를 녹음하고 브로드캐스트를 보내기 위해 마이크 접근 권한이 필요합니다.</string>
+	<string>음성 메시지 녹음과 브로드캐스트 전송을 위해 마이크 접근 권한이 필요합니다.</string>
+
+	<!-- Camera: profile photo -->
+	<key>NSCameraUsageDescription</key>
+	<string>프로필 사진 촬영을 위해 카메라 접근 권한이 필요합니다.</string>
+
+	<!-- Photo library: profile photo upload -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>프로필 사진 선택을 위해 사진 라이브러리 접근 권한이 필요합니다.</string>
+
+	<!-- Notifications -->
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>새 메시지와 브로드캐스트 알림을 받기 위해 알림 권한이 필요합니다.</string>
+
+	<!-- Background modes -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- Firebase auto-init -->
+	<key>FirebaseMessagingAutoInitEnabled</key>
+	<true/>
+
+	<!-- App Transport Security: allow HTTPS only in production -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+
+	<!-- ITSAppUsesNonExemptEncryption: no custom encryption -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

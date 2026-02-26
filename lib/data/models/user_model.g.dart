@@ -18,6 +18,7 @@ UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel(
   broadcastPushEnabled: json['broadcast_push_enabled'] as bool?,
   messagePushEnabled: json['message_push_enabled'] as bool?,
   walletBalance: (json['wallet_balance'] as num?)?.toInt(),
+  nicknameChangedAt: json['nickname_changed_at'] as String?,
   createdAt: json['created_at'] as String?,
   updatedAt: json['updated_at'] as String?,
 );
@@ -34,6 +35,7 @@ Map<String, dynamic> _$UserModelToJson(UserModel instance) => <String, dynamic>{
   'broadcast_push_enabled': instance.broadcastPushEnabled,
   'message_push_enabled': instance.messagePushEnabled,
   'wallet_balance': instance.walletBalance,
+  'nickname_changed_at': instance.nicknameChangedAt,
   'created_at': instance.createdAt,
   'updated_at': instance.updatedAt,
 };

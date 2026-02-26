@@ -13,7 +13,7 @@ class AudioCacheEntries extends Table {
   TextColumn get sourceType => text()(); // 'broadcast' or 'message'
   IntColumn get sourceId => integer()();
   TextColumn get remoteUrl => text()();
-  TextColumn get localPath => text()(); // relative path like audio_cache/broadcast_123.m4a
+  TextColumn get localPath => text()();
   IntColumn get fileSize => integer()();
   IntColumn get durationSeconds => integer().nullable()();
   DateTimeColumn get expiresAt => dateTime().nullable()();
@@ -26,14 +26,99 @@ class AudioCacheEntries extends Table {
       ];
 }
 
-@DriftDatabase(tables: [AudioCacheEntries])
+/// Offline cache for broadcasts metadata
+class CachedBroadcasts extends Table {
+  IntColumn get id => integer()();
+  IntColumn get userId => integer()();
+  TextColumn get senderNickname => text().nullable()();
+  TextColumn get senderGender => text().nullable()();
+  TextColumn get content => text().nullable()();
+  TextColumn get audioUrl => text().nullable()();
+  IntColumn get duration => integer().nullable()();
+  IntColumn get recipientCount => integer().withDefault(const Constant(0))();
+  IntColumn get replyCount => integer().withDefault(const Constant(0))();
+  BoolColumn get isExpired => boolean().withDefault(const Constant(false))();
+  BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
+  BoolColumn get isRead => boolean().withDefault(const Constant(false))();
+  BoolColumn get isListened => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get expiredAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get cachedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Offline cache for conversations metadata
+class CachedConversations extends Table {
+  IntColumn get id => integer()();
+  IntColumn get partnerUserId => integer().nullable()();
+  TextColumn get partnerNickname => text().nullable()();
+  TextColumn get partnerGender => text().nullable()();
+  TextColumn get partnerProfileImageUrl => text().nullable()();
+  IntColumn get broadcastId => integer().nullable()();
+  BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
+  BoolColumn get hasUnreadMessages => boolean().withDefault(const Constant(false))();
+  IntColumn get unreadCount => integer().withDefault(const Constant(0))();
+  TextColumn get lastMessagePreview => text().nullable()();
+  DateTimeColumn get lastMessageAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get cachedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Offline cache for messages
+class CachedMessages extends Table {
+  IntColumn get id => integer()();
+  IntColumn get conversationId => integer()();
+  IntColumn get senderId => integer()();
+  TextColumn get content => text().nullable()();
+  TextColumn get voiceUrl => text().nullable()();
+  IntColumn get duration => integer().nullable()();
+  TextColumn get messageType => text().withDefault(const Constant('text'))();
+  IntColumn get broadcastId => integer().nullable()();
+  BoolColumn get isRead => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get cachedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [
+  AudioCacheEntries,
+  CachedBroadcasts,
+  CachedConversations,
+  CachedMessages,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
-  @override
-  int get schemaVersion => 1;
+  AppDatabase.forTesting(super.e);
 
-  /// Get cache entry by source type and ID
+  @override
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (Migrator m) async {
+          await m.createAll();
+        },
+        onUpgrade: (Migrator m, int from, int to) async {
+          if (from < 2) {
+            await m.createTable(cachedBroadcasts);
+            await m.createTable(cachedConversations);
+            await m.createTable(cachedMessages);
+          }
+        },
+      );
+
+  // ==================== Audio Cache ====================
+
   Future<AudioCacheEntry?> getCacheEntry(
       String sourceType, int sourceId) async {
     return (select(audioCacheEntries)
@@ -42,7 +127,6 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
-  /// Insert or update a cache entry (conflict on sourceType + sourceId unique key)
   Future<void> upsertCacheEntry(AudioCacheEntriesCompanion entry) async {
     await into(audioCacheEntries).insert(
       entry,
@@ -53,7 +137,6 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  /// Update lastAccessedAt timestamp
   Future<void> touchCacheEntry(String sourceType, int sourceId) async {
     (update(audioCacheEntries)
           ..where(
@@ -63,7 +146,6 @@ class AppDatabase extends _$AppDatabase {
     ));
   }
 
-  /// Delete entries that have expired before the given time
   Future<int> deleteExpiredEntries(DateTime before) async {
     return (delete(audioCacheEntries)
           ..where((t) =>
@@ -71,7 +153,6 @@ class AppDatabase extends _$AppDatabase {
         .go();
   }
 
-  /// Get oldest entries by lastAccessedAt (LRU), limited by count
   Future<List<AudioCacheEntry>> getOldestEntries(int limit) async {
     return (select(audioCacheEntries)
           ..orderBy([
@@ -83,7 +164,6 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
-  /// Get total cache size in bytes
   Future<int> getTotalCacheSize() async {
     final result = await customSelect(
       'SELECT COALESCE(SUM(file_size), 0) AS total FROM audio_cache_entries',
@@ -91,11 +171,117 @@ class AppDatabase extends _$AppDatabase {
     return result.read<int>('total');
   }
 
-  /// Batch delete cache entries by IDs
   Future<int> deleteEntriesByIds(List<int> ids) async {
-    return (delete(audioCacheEntries)
-          ..where((t) => t.id.isIn(ids)))
+    return (delete(audioCacheEntries)..where((t) => t.id.isIn(ids))).go();
+  }
+
+  // ==================== Cached Broadcasts ====================
+
+  Future<List<CachedBroadcast>> getAllCachedBroadcasts() async {
+    return (select(cachedBroadcasts)
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .get();
+  }
+
+  Future<CachedBroadcast?> getCachedBroadcastById(int id) async {
+    return (select(cachedBroadcasts)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<void> upsertBroadcasts(List<CachedBroadcastsCompanion> entries) async {
+    await batch((b) {
+      for (final entry in entries) {
+        b.insert(cachedBroadcasts, entry, mode: InsertMode.insertOrReplace);
+      }
+    });
+  }
+
+  Future<void> markBroadcastListened(int id) async {
+    (update(cachedBroadcasts)..where((t) => t.id.equals(id)))
+        .write(const CachedBroadcastsCompanion(isListened: Value(true)));
+  }
+
+  Future<int> deleteOldBroadcasts(DateTime olderThan) async {
+    return (delete(cachedBroadcasts)
+          ..where((t) => t.cachedAt.isSmallerThanValue(olderThan)))
         .go();
+  }
+
+  // ==================== Cached Conversations ====================
+
+  Future<List<CachedConversation>> getAllCachedConversations() async {
+    return (select(cachedConversations)
+          ..orderBy([
+            (t) => OrderingTerm.desc(
+                coalesce([t.lastMessageAt, t.createdAt])),
+          ]))
+        .get();
+  }
+
+  Future<CachedConversation?> getCachedConversationById(int id) async {
+    return (select(cachedConversations)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<void> upsertConversations(
+      List<CachedConversationsCompanion> entries) async {
+    await batch((b) {
+      for (final entry in entries) {
+        b.insert(cachedConversations, entry, mode: InsertMode.insertOrReplace);
+      }
+    });
+  }
+
+  Future<void> deleteCachedConversation(int id) async {
+    await (delete(cachedConversations)..where((t) => t.id.equals(id))).go();
+    await (delete(cachedMessages)
+          ..where((t) => t.conversationId.equals(id)))
+        .go();
+  }
+
+  Future<void> updateConversationFavorite(int id, bool isFav) async {
+    (update(cachedConversations)..where((t) => t.id.equals(id)))
+        .write(CachedConversationsCompanion(isFavorite: Value(isFav)));
+  }
+
+  Future<void> markConversationRead(int id) async {
+    (update(cachedConversations)..where((t) => t.id.equals(id))).write(
+      const CachedConversationsCompanion(
+        hasUnreadMessages: Value(false),
+        unreadCount: Value(0),
+      ),
+    );
+  }
+
+  // ==================== Cached Messages ====================
+
+  Future<List<CachedMessage>> getCachedMessages(int conversationId) async {
+    return (select(cachedMessages)
+          ..where((t) => t.conversationId.equals(conversationId))
+          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+        .get();
+  }
+
+  Future<void> upsertMessages(List<CachedMessagesCompanion> entries) async {
+    await batch((b) {
+      for (final entry in entries) {
+        b.insert(cachedMessages, entry, mode: InsertMode.insertOrReplace);
+      }
+    });
+  }
+
+  Future<int> deleteOldMessages(DateTime olderThan) async {
+    return (delete(cachedMessages)
+          ..where((t) => t.cachedAt.isSmallerThanValue(olderThan)))
+        .go();
+  }
+
+  // ==================== Cleanup ====================
+
+  Future<void> clearAllCaches() async {
+    await delete(cachedBroadcasts).go();
+    await delete(cachedConversations).go();
+    await delete(cachedMessages).go();
   }
 }
 

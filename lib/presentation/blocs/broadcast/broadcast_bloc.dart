@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:talk_flutter/core/utils/error_utils.dart';
 import 'package:talk_flutter/domain/entities/broadcast.dart';
 import 'package:talk_flutter/domain/entities/broadcast_limits.dart';
 import 'package:talk_flutter/domain/repositories/broadcast_repository.dart';
@@ -174,7 +175,7 @@ class BroadcastBloc extends Bloc<BroadcastEvent, BroadcastState> {
     } catch (e) {
       emit(state.copyWith(
         status: BroadcastStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: getUserFriendlyErrorMessage(e),
         createSucceeded: false,
       ));
     }
@@ -211,7 +212,7 @@ class BroadcastBloc extends Bloc<BroadcastEvent, BroadcastState> {
     } catch (e) {
       emit(state.copyWith(
         status: BroadcastStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: getUserFriendlyErrorMessage(e),
         createSucceeded: false,
       ));
     }
@@ -234,7 +235,7 @@ class BroadcastBloc extends Bloc<BroadcastEvent, BroadcastState> {
     } catch (e) {
       emit(state.copyWith(
         status: BroadcastStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: getUserFriendlyErrorMessage(e),
         createSucceeded: false,
       ));
     }

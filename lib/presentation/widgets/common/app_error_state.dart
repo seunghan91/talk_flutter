@@ -1,38 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:talk_flutter/core/theme/theme.dart';
 
-/// Error state widget with icon, message, and retry button
+/// Friendly error state widget — avoids alarming users with technical details
 class AppErrorState extends StatelessWidget {
-  /// Error message to display
   final String message;
-
-  /// Optional error details (for developers)
-  final String? details;
-
-  /// Retry button callback
   final VoidCallback? onRetry;
-
-  /// Optional secondary action
   final String? secondaryActionText;
   final VoidCallback? onSecondaryAction;
-
-  /// Icon to display (default: error_outline)
   final IconData icon;
-
-  /// Icon size
   final double iconSize;
-
-  /// Whether this is a network error
   final bool isNetworkError;
 
   const AppErrorState({
     super.key,
     required this.message,
-    this.details,
     this.onRetry,
     this.secondaryActionText,
     this.onSecondaryAction,
-    this.icon = Icons.error_outline,
+    this.icon = Icons.cloud_off_rounded,
     this.iconSize = AppIconSize.hero,
     this.isNetworkError = false,
   });
@@ -40,6 +25,11 @@ class AppErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final effectiveIcon = isNetworkError ? Icons.wifi_off_rounded : icon;
+
+    // 네트워크 오류: muted(연한 분홍), 기타: accent(핑크) 배경
+    final iconBgColor = isNetworkError ? AppColors.muted : AppColors.accent;
+    final iconColor = AppColors.mutedForeground;
 
     return Center(
       child: Padding(
@@ -48,85 +38,87 @@ class AppErrorState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Animated error icon
+            // 아이콘 컨테이너 — 디자인 시스템 색상
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 400),
+              duration: const Duration(milliseconds: 350),
               curve: Curves.easeOutBack,
-              builder: (context, value, child) {
-                return Transform.scale(
-                  scale: value,
-                  child: Opacity(
-                    opacity: value.clamp(0.0, 1.0),
-                    child: child,
-                  ),
-                );
-              },
+              builder: (context, value, child) => Transform.scale(
+                scale: value,
+                child: Opacity(opacity: value.clamp(0.0, 1.0), child: child),
+              ),
               child: Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
+                  color: iconBgColor,
                   shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.border),
                 ),
-                child: Icon(
-                  isNetworkError ? Icons.wifi_off : icon,
-                  size: iconSize,
-                  color: theme.colorScheme.error,
-                ),
+                child: Icon(effectiveIcon, size: iconSize, color: iconColor),
               ),
             ),
 
-            AppSpacing.verticalXl,
+            const SizedBox(height: AppSpacing.lg),
 
-            // Error message
+            // 메시지 — primary 텍스트 컬러
             Text(
               message,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
+                color: AppColors.textPrimaryLight,
                 fontWeight: FontWeight.w500,
+                height: 1.6,
               ),
               textAlign: TextAlign.center,
             ),
 
-            // Error details (if provided and in debug mode)
-            if (details != null) ...[
-              AppSpacing.verticalSm,
-              Container(
-                padding: AppSpacing.cardPadding,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: AppRadius.smallRadius,
-                ),
-                child: Text(
-                  details!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontFamily: 'monospace',
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+            const SizedBox(height: AppSpacing.xl),
 
-            AppSpacing.verticalXl,
-
-            // Action buttons
+            // 버튼 행
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (onRetry != null)
-                  FilledButton.icon(
-                    onPressed: onRetry,
-                    icon: const Icon(Icons.refresh, size: AppIconSize.md),
-                    label: const Text('다시 시도'),
+                  SizedBox(
+                    height: 48,
+                    child: FilledButton.icon(
+                      onPressed: onRetry,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                        ),
+                        textStyle: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: const Text('다시 시도'),
+                    ),
                   ),
-                if (secondaryActionText != null && onSecondaryAction != null) ...[
-                  AppSpacing.horizontalSm,
-                  OutlinedButton(
-                    onPressed: onSecondaryAction,
-                    child: Text(secondaryActionText!),
+                if (secondaryActionText != null &&
+                    onSecondaryAction != null) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: onSecondaryAction,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.mutedForeground,
+                        side: BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                        ),
+                      ),
+                      child: Text(secondaryActionText!),
+                    ),
                   ),
                 ],
               ],
@@ -139,55 +131,50 @@ class AppErrorState extends StatelessWidget {
 
   // ============ Factory Constructors ============
 
-  /// Network error state
   factory AppErrorState.network({VoidCallback? onRetry}) {
     return AppErrorState(
-      message: '네트워크 연결을 확인해주세요',
-      icon: Icons.wifi_off,
+      message: '인터넷 연결이 불안정해요.\n연결 상태를 확인하고 다시 시도해주세요.',
+      icon: Icons.wifi_off_rounded,
       isNetworkError: true,
       onRetry: onRetry,
     );
   }
 
-  /// Server error state
   factory AppErrorState.server({VoidCallback? onRetry, String? details}) {
     return AppErrorState(
-      message: '서버 오류가 발생했습니다',
-      details: details,
-      icon: Icons.cloud_off,
+      message: '서버가 응답하지 않아요.\n잠시 후 다시 시도해주세요.',
+      icon: Icons.cloud_off_rounded,
       onRetry: onRetry,
     );
   }
 
-  /// Generic error state
   factory AppErrorState.generic({
     String? message,
     VoidCallback? onRetry,
   }) {
     return AppErrorState(
-      message: message ?? '오류가 발생했습니다',
+      message: message ?? '일시적인 문제가 발생했어요.\n잠시 후 다시 시도해주세요.',
+      icon: Icons.refresh_rounded,
       onRetry: onRetry,
     );
   }
 
-  /// Permission denied error
   factory AppErrorState.permissionDenied({
     String? feature,
     VoidCallback? onSettings,
   }) {
     return AppErrorState(
       message: feature != null ? '$feature 권한이 필요합니다' : '권한이 필요합니다',
-      icon: Icons.lock_outline,
+      icon: Icons.lock_outline_rounded,
       secondaryActionText: '설정으로 이동',
       onSecondaryAction: onSettings,
     );
   }
 
-  /// Authentication error
   factory AppErrorState.authRequired({VoidCallback? onLogin}) {
     return AppErrorState(
       message: '로그인이 필요합니다',
-      icon: Icons.person_outline,
+      icon: Icons.person_outline_rounded,
       onRetry: onLogin,
     );
   }

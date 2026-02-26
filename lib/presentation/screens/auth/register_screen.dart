@@ -5,9 +5,10 @@ import 'package:talk_flutter/core/constants/app_constants.dart';
 import 'package:talk_flutter/core/enums/app_enums.dart';
 import 'package:talk_flutter/core/extensions/extensions.dart';
 import 'package:talk_flutter/core/theme/theme.dart';
+import 'package:talk_flutter/core/utils/nickname_generator.dart';
 import 'package:talk_flutter/presentation/blocs/auth/auth_bloc.dart';
 
-/// Registration screen with phone verification
+/// Registration screen with phone verification - 보이스팅 design system
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -25,7 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  String _selectedGender = 'unspecified';
+  String _selectedGender = 'unknown';
   int _currentStep = 0;
 
   @override
@@ -49,7 +50,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _verifyCode() {
-    if (_codeController.text.trim().length == AppConstants.verificationCodeLength) {
+    if (_codeController.text.trim().length ==
+        AppConstants.verificationCodeLength) {
       context.read<AuthBloc>().add(
             AuthVerifyCodeRequested(
               phoneNumber: _phoneController.text.trim(),
@@ -72,23 +74,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  String get _stepSubtitle {
+    switch (_currentStep) {
+      case 0:
+        return '인증코드를 받을 전화번호를 입력하세요';
+      case 1:
+        return 'SMS로 받은 6자리 코드를 입력하세요';
+      case 2:
+        return '닉네임과 비밀번호를 설정하세요';
+      default:
+        return '';
+    }
+  }
+
+  String get _buttonText {
+    switch (_currentStep) {
+      case 0:
+        return '인증 코드 받기';
+      case 1:
+        return '코드 확인';
+      case 2:
+        return '회원가입';
+      default:
+        return '다음';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('회원가입'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.primary, size: 20),
+          onPressed: () {
+            if (_currentStep > 0) {
+              setState(() => _currentStep--);
+            } else {
+              context.pop();
+            }
+          },
         ),
       ),
+      extendBodyBehindAppBar: true,
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state.status == AuthStatus.authenticated) {
             context.go('/');
-          } else if (state.status == AuthStatus.error && state.errorMessage != null) {
+          } else if (state.status == AuthStatus.error &&
+              state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.errorMessage!),
@@ -108,82 +146,95 @@ class _RegisterScreenState extends State<RegisterScreen> {
           }
         },
         builder: (context, state) {
-          return SafeArea(
-            child: Stepper(
-              currentStep: _currentStep,
-              onStepContinue: () {
-                if (_currentStep == 0) {
-                  _requestCode();
-                } else if (_currentStep == 1) {
-                  _verifyCode();
-                } else if (_currentStep == 2) {
-                  _register();
-                }
-              },
-              onStepCancel: () {
-                if (_currentStep > 0) {
-                  setState(() => _currentStep--);
-                } else {
-                  context.pop();
-                }
-              },
-              controlsBuilder: (context, details) {
-                return Padding(
-                  padding: EdgeInsets.only(top: AppSpacing.md),
-                  child: Row(
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 1.0],
+                colors: [
+                  context.surfaceColor,
+                  const Color(0x4DFFD4D8), // #FFD4D8 at ~30% opacity
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.md,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: state.isLoading ? null : details.onStepContinue,
-                          child: state.isLoading
-                              ? SizedBox(
-                                  height: AppIconSize.md,
-                                  width: AppIconSize.md,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: colorScheme.onPrimary,
-                                  ),
-                                )
-                              : Text(_getButtonText()),
+                      // Logo
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.favorite_rounded,
+                          color: Colors.white,
+                          size: 40,
                         ),
                       ),
-                      if (_currentStep > 0) ...[
-                        AppSpacing.horizontalSm,
-                        OutlinedButton(
-                          onPressed: details.onStepCancel,
-                          child: const Text('이전'),
+                      AppSpacing.verticalMd,
+
+                      // Title
+                      Text(
+                        _currentStep == 2 ? '프로필 설정' : '보이스팅',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineLarge
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                      ),
+                      AppSpacing.verticalXs,
+
+                      // Subtitle
+                      Text(
+                        _stepSubtitle,
+                        textAlign: TextAlign.center,
+                        style:
+                            Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: context.mutedForegroundColor,
+                                ),
+                      ),
+                      const SizedBox(height: AppSpacing.xxl),
+
+                      // Step card
+                      Container(
+                        decoration: BoxDecoration(
+                          color: context.cardColor,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          border: Border.all(color: context.borderColor),
+                          boxShadow: [
+                            BoxShadow(
+                              color: context.shadowColor,
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      ],
+                        padding: const EdgeInsets.all(AppSpacing.xl),
+                        child: _currentStep == 0
+                            ? _buildPhoneStep(state)
+                            : _currentStep == 1
+                                ? _buildCodeStep(state)
+                                : _buildProfileStep(state),
+                      ),
                     ],
                   ),
-                );
-              },
-              steps: [
-                // Step 1: Phone Number
-                Step(
-                  title: const Text('전화번호 입력'),
-                  subtitle: const Text('인증코드를 받을 전화번호를 입력하세요'),
-                  isActive: _currentStep >= 0,
-                  state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-                  content: _buildPhoneStep(),
                 ),
-                // Step 2: Verification Code
-                Step(
-                  title: const Text('인증코드 확인'),
-                  subtitle: const Text('SMS로 받은 6자리 코드를 입력하세요'),
-                  isActive: _currentStep >= 1,
-                  state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-                  content: _buildCodeStep(),
-                ),
-                // Step 3: Profile Setup
-                Step(
-                  title: const Text('프로필 설정'),
-                  subtitle: const Text('닉네임과 비밀번호를 설정하세요'),
-                  isActive: _currentStep >= 2,
-                  state: StepState.indexed,
-                  content: _buildProfileStep(),
-                ),
-              ],
+              ),
             ),
           );
         },
@@ -191,34 +242,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  String _getButtonText() {
-    switch (_currentStep) {
-      case 0:
-        return '인증코드 요청';
-      case 1:
-        return '코드 확인';
-      case 2:
-        return '회원가입 완료';
-      default:
-        return '다음';
-    }
-  }
-
-  Widget _buildPhoneStep() {
+  Widget _buildPhoneStep(AuthState state) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextFormField(
+        _StyledTextField(
           controller: _phoneController,
+          hintText: '전화번호 (01012345678)',
           keyboardType: TextInputType.phone,
           maxLength: 11,
-          decoration: const InputDecoration(
-            labelText: '전화번호',
-            hintText: '01012345678',
-            prefixIcon: Icon(Icons.phone),
-            border: OutlineInputBorder(),
-            counterText: '',
-          ),
           validator: (value) {
             if (value.isNullOrBlank) {
               return '전화번호를 입력해주세요';
@@ -233,32 +265,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Text(
           '"-" 없이 숫자만 입력하세요',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: context.mutedForegroundColor,
               ),
         ),
-        AppSpacing.verticalMd,
-        // Dev skip button
+        AppSpacing.verticalXl,
+
+        // Primary button
+        _PrimaryButton(
+          label: _buttonText,
+          isLoading: state.isLoading,
+          onPressed: _requestCode,
+        ),
+
+        AppSpacing.verticalLg,
         _buildDevSkipSection(),
       ],
     );
   }
 
-  Widget _buildCodeStep() {
-    final colorScheme = Theme.of(context).colorScheme;
-
+  Widget _buildCodeStep(AuthState state) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextFormField(
+        // Large centered code input
+        _StyledTextField(
           controller: _codeController,
+          hintText: '인증코드 6자리',
           keyboardType: TextInputType.number,
           maxLength: 6,
-          decoration: const InputDecoration(
-            labelText: '인증코드',
-            hintText: '123456',
-            prefixIcon: Icon(Icons.lock_outline),
-            border: OutlineInputBorder(),
-            counterText: '',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 8,
+            color: context.textPrimary,
           ),
           validator: (value) {
             if (value.isNullOrBlank) {
@@ -271,116 +311,148 @@ class _RegisterScreenState extends State<RegisterScreen> {
           },
         ),
         AppSpacing.verticalXs,
+
+        // Resend row
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               '코드를 받지 못하셨나요?',
-              style: Theme.of(context).textTheme.bodySmall,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.mutedForegroundColor,
+                  ),
             ),
             TextButton(
               onPressed: _requestCode,
-              child: const Text('재발송'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs, vertical: 0),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                '재발송',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         ),
+
         AppSpacing.verticalXs,
         Container(
-          padding: EdgeInsets.all(AppSpacing.sm),
+          padding: const EdgeInsets.all(AppSpacing.sm),
           decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-            borderRadius: AppRadius.smallRadius,
+            color: AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.info_outline,
                 size: AppIconSize.sm,
-                color: colorScheme.primary,
+                color: AppColors.primary,
               ),
               AppSpacing.horizontalXs,
               Expanded(
                 child: Text(
                   '테스트: 코드 111111을 사용하세요',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.primary,
+                        color: AppColors.primary,
                       ),
                 ),
               ),
             ],
           ),
         ),
-        AppSpacing.verticalMd,
-        // Dev skip button
+
+        AppSpacing.verticalXl,
+
+        _PrimaryButton(
+          label: _buttonText,
+          isLoading: state.isLoading,
+          onPressed: _verifyCode,
+        ),
+
+        AppSpacing.verticalLg,
         _buildDevSkipSection(),
       ],
     );
   }
 
-  Widget _buildProfileStep() {
+  Widget _buildProfileStep(AuthState state) {
     return Form(
       key: _formKey,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Nickname
-          TextFormField(
-            controller: _nicknameController,
-            maxLength: AppConstants.maxNicknameLength,
-            decoration: const InputDecoration(
-              labelText: '닉네임',
-              hintText: '사용할 닉네임을 입력하세요',
-              prefixIcon: Icon(Icons.person),
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value.isNullOrBlank) {
-                return '닉네임을 입력해주세요';
-              }
-              if (value!.length < 2) {
-                return '닉네임은 2자 이상이어야 합니다';
-              }
-              return null;
-            },
-          ),
-          AppSpacing.verticalMd,
-
-          // Gender
-          DropdownButtonFormField<String>(
-            initialValue: _selectedGender,
-            decoration: const InputDecoration(
-              labelText: '성별',
-              prefixIcon: Icon(Icons.wc),
-              border: OutlineInputBorder(),
-            ),
-            items: const [
-              DropdownMenuItem(value: 'unspecified', child: Text('선택 안함')),
-              DropdownMenuItem(value: 'male', child: Text('남성')),
-              DropdownMenuItem(value: 'female', child: Text('여성')),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _StyledTextField(
+                  controller: _nicknameController,
+                  hintText: '닉네임 (예: 행복한고양이)',
+                  maxLength: AppConstants.maxNicknameLength,
+                  validator: (value) {
+                    if (value.isNullOrBlank) {
+                      return '닉네임을 입력해주세요';
+                    }
+                    if (value!.length < 2) {
+                      return '닉네임은 2자 이상이어야 합니다';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              AppSpacing.horizontalSm,
+              SizedBox(
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      _nicknameController.text = NicknameGenerator.generate();
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                  ),
+                  child: const Icon(Icons.refresh_rounded, size: 20),
+                ),
+              ),
             ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _selectedGender = value);
-              }
-            },
+          ),
+          AppSpacing.verticalXxs,
+          Text(
+            '버튼을 눌러 자동 생성하거나 직접 입력하세요',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.mutedForegroundColor,
+                ),
           ),
           AppSpacing.verticalMd,
 
           // Password
-          TextFormField(
+          _StyledTextField(
             controller: _passwordController,
+            hintText: '비밀번호',
             obscureText: _obscurePassword,
-            decoration: InputDecoration(
-              labelText: '비밀번호',
-              prefixIcon: const Icon(Icons.lock),
-              border: const OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                ),
-                onPressed: () {
-                  setState(() => _obscurePassword = !_obscurePassword);
-                },
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: context.mutedForegroundColor,
+                size: 20,
               ),
+              onPressed: () {
+                setState(() => _obscurePassword = !_obscurePassword);
+              },
             ),
             validator: (value) {
               if (value.isNullOrBlank) {
@@ -395,23 +467,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
           AppSpacing.verticalMd,
 
           // Confirm Password
-          TextFormField(
+          _StyledTextField(
             controller: _confirmPasswordController,
+            hintText: '비밀번호 확인',
             obscureText: _obscureConfirmPassword,
-            decoration: InputDecoration(
-              labelText: '비밀번호 확인',
-              prefixIcon: const Icon(Icons.lock_outline),
-              border: const OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureConfirmPassword
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                ),
-                onPressed: () {
-                  setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
-                },
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirmPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: context.mutedForegroundColor,
+                size: 20,
               ),
+              onPressed: () {
+                setState(
+                    () => _obscureConfirmPassword = !_obscureConfirmPassword);
+              },
             ),
             validator: (value) {
               if (value.isNullOrBlank) {
@@ -423,67 +494,87 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
+          AppSpacing.verticalMd,
+
+          // Gender selector
+          _GenderSelector(
+            selected: _selectedGender,
+            onChanged: (value) => setState(() => _selectedGender = value),
+          ),
+          AppSpacing.verticalXl,
+
+          _PrimaryButton(
+            label: _buttonText,
+            isLoading: state.isLoading,
+            onPressed: _register,
+          ),
         ],
       ),
     );
   }
 
-  /// Dev section with skip and quick login buttons
   Widget _buildDevSkipSection() {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
-      padding: EdgeInsets.all(AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: AppRadius.mediumRadius,
-        border: Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.3),
-        ),
+        color: context.mutedColor,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.developer_mode,
                 size: AppIconSize.sm,
-                color: colorScheme.primary,
+                color: AppColors.primary,
               ),
               AppSpacing.horizontalXxs,
               Text(
                 '개발용 옵션',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: colorScheme.primary,
+                      color: AppColors.primary,
                       fontWeight: FontWeight.bold,
                     ),
               ),
             ],
           ),
           AppSpacing.verticalSm,
-          // Skip verification button
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
-                // Skip to profile step
-                setState(() => _currentStep = 2);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('[개발용] 인증을 건너뜁니다.')),
-                );
+                final phone = _phoneController.text.trim();
+                if (phone.length >= 10) {
+                  // 전화번호가 입력됐으면 서버에도 bypass 인증 처리
+                  context.read<AuthBloc>().add(
+                        AuthDevBypassVerificationRequested(phoneNumber: phone),
+                      );
+                } else {
+                  // 전화번호 없으면 UI만 스킵
+                  setState(() => _currentStep = 2);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('[개발용] 인증을 건너뜁니다.')),
+                  );
+                }
               },
               icon: const Icon(Icons.skip_next),
               label: const Text('인증 패스하기'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: BorderSide(color: context.borderColor),
+              ),
             ),
           ),
           AppSpacing.verticalXs,
-          const Divider(),
+          Divider(color: Theme.of(context).dividerColor),
           AppSpacing.verticalXs,
           Text(
             '기존 테스트 계정으로 바로 로그인',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+                  color: context.mutedForegroundColor,
                 ),
           ),
           AppSpacing.verticalXs,
@@ -499,6 +590,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         );
                   },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: context.borderColor),
+                    padding: EdgeInsets.zero,
+                  ),
                   child: const Text('김채현'),
                 ),
               ),
@@ -513,6 +609,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         );
                   },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: context.borderColor),
+                    padding: EdgeInsets.zero,
+                  ),
                   child: const Text('이지원'),
                 ),
               ),
@@ -527,12 +628,254 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         );
                   },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: BorderSide(color: context.borderColor),
+                    padding: EdgeInsets.zero,
+                  ),
                   child: const Text('박지민'),
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shared sub-widgets
+// ---------------------------------------------------------------------------
+
+/// Styled input field matching 보이스팅 design system
+class _StyledTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hintText;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final Widget? suffixIcon;
+  final String? Function(String?)? validator;
+  final int? maxLength;
+  final TextAlign textAlign;
+  final TextStyle? style;
+
+  const _StyledTextField({
+    required this.controller,
+    required this.hintText,
+    this.keyboardType,
+    this.obscureText = false,
+    this.suffixIcon,
+    this.validator,
+    this.maxLength,
+    this.textAlign = TextAlign.start,
+    this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      maxLength: maxLength,
+      textAlign: textAlign,
+      validator: validator,
+      style: style ??
+          TextStyle(
+            color: context.textPrimary,
+            fontSize: 15,
+          ),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(
+          color: context.mutedForegroundColor,
+          fontSize: 15,
+        ),
+        filled: true,
+        fillColor: context.inputBgColor,
+        counterText: '',
+        suffixIcon: suffixIcon,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide:
+              const BorderSide(color: AppColors.error, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide:
+              const BorderSide(color: AppColors.error, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
+
+/// Primary action button
+class _PrimaryButton extends StatelessWidget {
+  final String label;
+  final bool isLoading;
+  final VoidCallback? onPressed;
+
+  const _PrimaryButton({
+    required this.label,
+    required this.isLoading,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          elevation: 0,
+        ),
+        child: isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+/// Gender selector - 2 button grid matching ProfileSetupPage.tsx
+class _GenderSelector extends StatelessWidget {
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  const _GenderSelector({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '성별',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context.mutedForegroundColor,
+                fontWeight: FontWeight.w500,
+              ),
+        ),
+        AppSpacing.verticalXs,
+        Row(
+          children: [
+            Expanded(
+              child: _GenderButton(
+                label: '남성',
+                value: 'male',
+                selected: selected,
+                onTap: onChanged,
+              ),
+            ),
+            AppSpacing.horizontalSm,
+            Expanded(
+              child: _GenderButton(
+                label: '여성',
+                value: 'female',
+                selected: selected,
+                onTap: onChanged,
+              ),
+            ),
+          ],
+        ),
+        AppSpacing.verticalXs,
+        SizedBox(
+          width: double.infinity,
+          child: _GenderButton(
+            label: '선택 안함',
+            value: 'unknown',
+            selected: selected,
+            onTap: onChanged,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GenderButton extends StatelessWidget {
+  final String label;
+  final String value;
+  final String selected;
+  final ValueChanged<String> onTap;
+
+  const _GenderButton({
+    required this.label,
+    required this.value,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = selected == value;
+
+    return GestureDetector(
+      onTap: () => onTap(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : context.inputBgColor,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : context.borderColor,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? AppColors.primary : context.mutedForegroundColor,
+            fontWeight:
+                isSelected ? FontWeight.w600 : FontWeight.w400,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }

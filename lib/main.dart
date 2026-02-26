@@ -6,8 +6,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:talk_flutter/core/enums/app_enums.dart';
 
 import 'package:go_router/go_router.dart';
+import 'package:talk_flutter/core/services/audio_lifecycle_service.dart';
+import 'package:talk_flutter/core/services/connectivity_service.dart';
+import 'package:talk_flutter/core/services/fcm_service.dart';
+import 'package:talk_flutter/firebase_options.dart';
 import 'package:talk_flutter/core/constants/app_constants.dart';
 import 'package:talk_flutter/data/database/app_database.dart';
 import 'package:talk_flutter/data/datasources/local/secure_storage_datasource.dart';
@@ -56,7 +61,9 @@ final logger = Logger(
 /// Initialize Firebase services
 Future<void> _initializeFirebase() async {
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     logger.i('Firebase initialized successfully');
 
     // Initialize Crashlytics (only in release mode)
@@ -130,6 +137,10 @@ void main() async {
     dio: dioClient.dio,
   );
 
+  // Initialize connectivity monitoring
+  final connectivityService = ConnectivityService();
+  await connectivityService.initialize();
+
   // Initialize database and audio cache
   final appDatabase = AppDatabase();
   final audioCacheService = await AudioCacheService.create(
@@ -137,14 +148,27 @@ void main() async {
     dioClient.dio,
   );
 
-  // Wrap broadcast repository with caching decorator
+  // Initialize audio lifecycle (background pause/resume)
+  final audioLifecycleService = AudioLifecycleService();
+  audioLifecycleService.initialize();
+
+  // Wrap broadcast repository with cache-first decorator
   final broadcastRepository = CachedBroadcastRepository(
     inner: broadcastRepositoryImpl,
     cacheService: audioCacheService,
+    db: appDatabase,
+    connectivity: connectivityService,
   );
 
   // Cleanup expired cache on startup (fire and forget)
   audioCacheService.cleanupExpired();
+  // Purge metadata caches older than 30 days
+  appDatabase.deleteOldBroadcasts(
+    DateTime.now().subtract(const Duration(days: 30)),
+  );
+  appDatabase.deleteOldMessages(
+    DateTime.now().subtract(const Duration(days: 30)),
+  );
 
   final conversationRepositoryImpl = ConversationRepositoryImpl(
     apiClient: apiClient,
@@ -154,6 +178,8 @@ void main() async {
   final conversationRepository = CachedConversationRepository(
     inner: conversationRepositoryImpl,
     cacheService: audioCacheService,
+    db: appDatabase,
+    connectivity: connectivityService,
   );
 
   final notificationRepository = NotificationRepositoryImpl(
@@ -171,6 +197,34 @@ void main() async {
   // Create router with auth-aware refresh
   final router = createAppRouter(authBloc);
 
+  // Initialize FCM push notifications
+  final fcmService = FcmService();
+  await fcmService.initialize(
+    router: router,
+    onTokenRefresh: (token) {
+      // Send token to server when available
+      // Silently catch errors - token will be retried on next refresh
+      notificationRepository.updatePushToken(token).catchError((_) {});
+    },
+  );
+
+  // Listen to auth state changes to sync FCM token
+  // - Login/Register: re-register token (app start may have been unauthenticated)
+  // - Logout: delete token from FCM + server
+  AuthStatus? lastAuthStatus;
+  authBloc.stream.listen((state) {
+    if (state.status == lastAuthStatus) return;
+    lastAuthStatus = state.status;
+
+    if (state.status == AuthStatus.authenticated) {
+      // Re-register token after login - previous attempt may have been unauthenticated
+      fcmService.registerToken();
+    } else if (state.status == AuthStatus.unauthenticated) {
+      // Delete token on logout so this device no longer receives notifications
+      fcmService.deleteToken();
+    }
+  });
+
   runApp(
     TalkApp(
       authBloc: authBloc,
@@ -182,6 +236,8 @@ void main() async {
       walletRepository: walletRepository,
       feedbackRepository: feedbackRepository,
       audioCacheService: audioCacheService,
+      connectivityService: connectivityService,
+      audioLifecycleService: audioLifecycleService,
       router: router,
     ),
   );
@@ -198,6 +254,8 @@ class TalkApp extends StatelessWidget {
   final WalletRepository walletRepository;
   final FeedbackRepository feedbackRepository;
   final AudioCacheService audioCacheService;
+  final ConnectivityService connectivityService;
+  final AudioLifecycleService audioLifecycleService;
   final GoRouter router;
 
   const TalkApp({
@@ -211,6 +269,8 @@ class TalkApp extends StatelessWidget {
     required this.walletRepository,
     required this.feedbackRepository,
     required this.audioCacheService,
+    required this.connectivityService,
+    required this.audioLifecycleService,
     required this.router,
   });
 
@@ -226,6 +286,8 @@ class TalkApp extends StatelessWidget {
         RepositoryProvider<WalletRepository>.value(value: walletRepository),
         RepositoryProvider<FeedbackRepository>.value(value: feedbackRepository),
         RepositoryProvider<AudioCacheService>.value(value: audioCacheService),
+        RepositoryProvider<ConnectivityService>.value(value: connectivityService),
+        RepositoryProvider<AudioLifecycleService>.value(value: audioLifecycleService),
       ],
       child: MultiBlocProvider(
         providers: [

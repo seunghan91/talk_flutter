@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "29312418322",
+    "project_id": "talkk-voice-app",
+    "storage_bucket": "talkk-voice-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:29312418322:android:4c3348e40f409115ad4ecb",
+        "android_client_info": {
+          "package_name": "com.talkk.talk_flutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "29312418322-11g9orla0bqh1917ulpls35al9pgh2ti.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.talkk.talk_flutter",
+            "certificate_hash": "a8e9b63cc69ae9fe06aabb2ee343851a74961648"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzwfnL5lSu9Lybf89n6PhV80gh5sNxbI4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -22,7 +22,8 @@ class VoiceMessageRecorder extends StatefulWidget {
   State<VoiceMessageRecorder> createState() => _VoiceMessageRecorderState();
 }
 
-class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
+class _VoiceMessageRecorderState extends State<VoiceMessageRecorder>
+    with SingleTickerProviderStateMixin {
   final VoiceRecordingService _recordingService = VoiceRecordingService();
 
   Timer? _durationTimer;
@@ -30,10 +31,23 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
   Duration _recordingDuration = Duration.zero;
   String? _errorMessage;
 
+  // Pulse animation for recording state
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
   @override
   void initState() {
     super.initState();
     _initializeRecorder();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
   }
 
   Future<void> _initializeRecorder() async {
@@ -43,6 +57,7 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
   @override
   void dispose() {
     _durationTimer?.cancel();
+    _pulseController.dispose();
     _recordingService.reset();
     super.dispose();
   }
@@ -105,7 +120,8 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
     if (!mounted) return;
 
     if (result.success && result.filePath != null) {
-      final duration = result.durationSeconds ?? _recordingDuration.inSeconds;
+      final duration =
+          result.durationSeconds ?? _recordingDuration.inSeconds;
       widget.onRecordingComplete?.call(result.filePath!, duration);
 
       setState(() {
@@ -168,8 +184,6 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     // Error state
     if (_state == RecorderState.error) {
       return Semantics(
@@ -178,22 +192,22 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
-                color: colorScheme.error,
+                color: AppColors.error,
                 semanticLabel: '오류 아이콘',
               ),
               AppSpacing.horizontalXs,
               Expanded(
                 child: Text(
                   _errorMessage ?? '녹음에 실패했습니다',
-                  style: TextStyle(color: colorScheme.error),
+                  style: const TextStyle(color: AppColors.error),
                 ),
               ),
               Tooltip(
                 message: '닫기',
                 child: IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, color: AppColors.mutedForeground),
                   onPressed: () {
                     setState(() {
                       _state = RecorderState.idle;
@@ -208,68 +222,124 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
       );
     }
 
-    // Idle state - show record button
+    // Idle state - centered mic button
     if (_state == RecorderState.idle) {
-      return Semantics(
-        label: '음성 메시지 녹음 시작',
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.xs),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: AppRadius.extraLargeRadius,
-                  ),
-                  child: Text(
-                    '음성 메시지 녹음...',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
-                ),
-              ),
-              AppSpacing.horizontalXs,
-              Tooltip(
-                message: '녹음 시작',
-                child: FloatingActionButton.small(
-                  onPressed: _startRecording,
-                  backgroundColor: colorScheme.primary,
-                  child: const Icon(Icons.mic),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildIdleState();
     }
 
-    // Recording state
+    // Recording / stopping / has-recording state
+    return _buildActiveRecorderState();
+  }
+
+  // -------------------------------------------------------------------------
+  // Idle - centered 80px mic button
+  // -------------------------------------------------------------------------
+  Widget _buildIdleState() {
     return Semantics(
-      label: '녹음 중',
-      hint: '삭제하려면 왼쪽 버튼, 전송하려면 오른쪽 버튼을 탭하세요',
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.xs),
-        decoration: BoxDecoration(
-          color: colorScheme.errorContainer.withValues(alpha: 0.3),
-          borderRadius: AppRadius.largeRadius,
-        ),
+      label: '음성 메시지 녹음 시작',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Waveform visualization
-            if (_state == RecorderState.recording &&
-                _recordingService.recorderController != null)
+            // Title
+            Text(
+              '음성 메시지 녹음',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF2D1B1B),
+                  ),
+            ),
+            AppSpacing.verticalXs,
+            Text(
+              '버튼을 눌러 녹음을 시작하세요',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.mutedForeground,
+                  ),
+            ),
+            AppSpacing.verticalLg,
+
+            // 80px mic button - idle style
+            GestureDetector(
+              onTap: _startRecording,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.muted,
+                ),
+                child: const Icon(
+                  Icons.mic_rounded,
+                  color: AppColors.mutedForeground,
+                  size: 36,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Active recorder (recording / stopping)
+  // -------------------------------------------------------------------------
+  Widget _buildActiveRecorderState() {
+    final isRecording = _state == RecorderState.recording;
+    final isStopping = _state == RecorderState.stopping;
+
+    return Semantics(
+      label: '녹음 중',
+      hint: '취소하려면 X 버튼, 전송하려면 전송 버튼을 탭하세요',
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title + subtitle
+            Text(
+              '음성 메시지 녹음',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF2D1B1B),
+                  ),
+            ),
+            AppSpacing.verticalXs,
+            Text(
+              isRecording ? '녹음 중...' : '처리 중...',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.mutedForeground,
+                  ),
+            ),
+            AppSpacing.verticalLg,
+
+            // 80px mic button - animated while recording
+            _buildRecordingMicButton(isRecording),
+            AppSpacing.verticalMd,
+
+            // Duration (large monospace, primary color when recording)
+            Text(
+              _formatDuration(_recordingDuration),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                color: isRecording ? AppColors.primary : AppColors.mutedForeground,
+                letterSpacing: 2,
+              ),
+            ),
+            AppSpacing.verticalMd,
+
+            // Waveform
+            if (isRecording && _recordingService.recorderController != null)
               SizedBox(
                 height: 48,
                 child: AudioWaveforms(
-                  size: Size(MediaQuery.of(context).size.width - 48, 48),
+                  size: Size(MediaQuery.of(context).size.width - 64, 48),
                   recorderController: _recordingService.recorderController!,
-                  waveStyle: WaveStyle(
-                    waveColor: colorScheme.error,
+                  waveStyle: const WaveStyle(
+                    waveColor: AppColors.primary,
                     extendWaveform: true,
                     showMiddleLine: false,
                     spacing: 6.0,
@@ -280,99 +350,220 @@ class _VoiceMessageRecorderState extends State<VoiceMessageRecorder> {
                 ),
               )
             else
-              const SizedBox(
+              SizedBox(
                 height: 48,
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(
+                  child: LinearProgressIndicator(
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                    color: AppColors.primary,
+                  ),
+                ),
               ),
 
-            AppSpacing.verticalXs,
+            AppSpacing.verticalMd,
 
-            // Controls row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Cancel button
-                Tooltip(
-                  message: '녹음 취소',
-                  child: IconButton(
-                    onPressed: _state == RecorderState.recording ? _cancelRecording : null,
-                    icon: const Icon(Icons.delete_outline),
-                    color: colorScheme.error,
-                  ),
-                ),
-
-                // Duration
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xxs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.error.withValues(alpha: 0.2),
-                    borderRadius: AppRadius.mediumRadius,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _state == RecorderState.recording
-                              ? colorScheme.error
-                              : colorScheme.onSurface.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      AppSpacing.horizontalXs,
-                      Text(
-                        _formatDuration(_recordingDuration),
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Send button
-                Tooltip(
-                  message: '전송',
-                  child: IconButton.filled(
-                    onPressed: _state == RecorderState.recording &&
-                            _recordingDuration.inSeconds > 0
-                        ? _stopAndSend
-                        : null,
-                    icon: _state == RecorderState.stopping
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send),
-                    style: IconButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      disabledBackgroundColor: colorScheme.surfaceContainerHighest,
-                    ),
-                  ),
-                ),
-              ],
+            // Progress bar (time remaining)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              child: LinearProgressIndicator(
+                value: _recordingDuration.inSeconds / widget.maxDurationSeconds,
+                minHeight: 3,
+                backgroundColor: AppColors.neutral200,
+                color: AppColors.primary,
+              ),
             ),
+            AppSpacing.verticalLg,
 
-            // Progress bar
-            AppSpacing.verticalXs,
-            LinearProgressIndicator(
-              value: _recordingDuration.inSeconds / widget.maxDurationSeconds,
-              backgroundColor: colorScheme.surfaceContainerHighest,
-              color: colorScheme.error,
-            ),
+            // Control buttons
+            _buildControlButtons(isRecording, isStopping),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildRecordingMicButton(bool isRecording) {
+    final Color bgColor = isRecording ? AppColors.primary : AppColors.secondary;
+    final Color iconColor = isRecording ? Colors.white : AppColors.primary;
+
+    if (isRecording) {
+      return AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _pulseAnimation.value,
+            child: child,
+          );
+        },
+        child: Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: bgColor,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.35),
+                blurRadius: 16,
+                spreadRadius: 4,
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.mic_rounded,
+            color: iconColor,
+            size: 36,
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: bgColor.withValues(alpha: 0.5),
+      ),
+      child: Icon(
+        Icons.mic_rounded,
+        color: iconColor,
+        size: 36,
+      ),
+    );
+  }
+
+  Widget _buildControlButtons(bool isRecording, bool isStopping) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Stop recording button (full width, destructive)
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton.icon(
+            onPressed: isRecording ? _stopRecordingOnly : null,
+            icon: const Icon(Icons.stop_rounded, size: 20),
+            label: const Text(
+              '녹음 중지',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: AppColors.error.withValues(alpha: 0.4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ),
+        AppSpacing.verticalSm,
+
+        // Secondary row: New recording + Send
+        Row(
+          children: [
+            // New recording button
+            Expanded(
+              child: SizedBox(
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: isRecording ? null : _resetRecording,
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text(
+                    '다시 녹음',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.muted,
+                    foregroundColor: AppColors.mutedForeground,
+                    disabledBackgroundColor:
+                        AppColors.muted.withValues(alpha: 0.5),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            AppSpacing.horizontalSm,
+
+            // Send button
+            Expanded(
+              child: SizedBox(
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: (isRecording && _recordingDuration.inSeconds > 0)
+                      ? _stopAndSend
+                      : null,
+                  icon: isStopping
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.send_rounded, size: 18),
+                  label: const Text(
+                    '보내기',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor:
+                        AppColors.primary.withValues(alpha: 0.4),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        AppSpacing.verticalXs,
+
+        // Cancel ghost button
+        TextButton.icon(
+          onPressed: isRecording ? _cancelRecording : null,
+          icon: const Icon(Icons.close_rounded, size: 16),
+          label: const Text('취소'),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.mutedForeground,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Stop recorder without sending (for "다시 녹음" prep)
+  Future<void> _stopRecordingOnly() async {
+    _durationTimer?.cancel();
+    await _recordingService.stopRecording();
+
+    if (!mounted) return;
+    setState(() {
+      _state = RecorderState.idle;
+      _recordingDuration = Duration.zero;
+    });
+  }
+
+  /// Reset to idle without sending
+  Future<void> _resetRecording() async {
+    _durationTimer?.cancel();
+    await _recordingService.cancelRecording();
+
+    if (!mounted) return;
+    setState(() {
+      _state = RecorderState.idle;
+      _recordingDuration = Duration.zero;
+    });
   }
 }
 

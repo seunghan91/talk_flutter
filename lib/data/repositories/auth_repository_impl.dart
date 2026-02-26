@@ -28,6 +28,12 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<bool> verifyCode(
       String phoneNumber, String code, String verificationId) async {
+    // Dev bypass: verificationId가 비어있으면 서버 직접 호출 (Firebase 스킵)
+    if (verificationId.isEmpty) {
+      await _apiClient.verifyCode({'phone_number': phoneNumber, 'code': code});
+      return true;
+    }
+
     // 1. Verify with Firebase → get ID token
     final firebaseToken =
         await _firebasePhoneAuth.verifyCodeAndGetToken(verificationId, code);

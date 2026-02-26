@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:talk_flutter/domain/entities/broadcast.dart';
+import 'package:talk_flutter/domain/entities/broadcast_limits.dart';
 import 'package:talk_flutter/domain/repositories/broadcast_repository.dart';
 import 'package:talk_flutter/presentation/blocs/broadcast/broadcast_bloc.dart';
 
@@ -45,6 +46,8 @@ void main() {
         setUp: () {
           when(() => mockBroadcastRepository.getBroadcasts(page: any(named: 'page')))
               .thenAnswer((_) async => testBroadcasts);
+          when(() => mockBroadcastRepository.getBroadcastLimits())
+              .thenAnswer((_) async => BroadcastLimits.fallback());
         },
         build: () => BroadcastBloc(broadcastRepository: mockBroadcastRepository),
         act: (bloc) => bloc.add(const BroadcastListRequested()),
@@ -82,6 +85,8 @@ void main() {
         setUp: () {
           when(() => mockBroadcastRepository.getBroadcasts(page: any(named: 'page')))
               .thenAnswer((_) async => testBroadcasts);
+          when(() => mockBroadcastRepository.getBroadcastLimits())
+              .thenAnswer((_) async => BroadcastLimits.fallback());
         },
         build: () => BroadcastBloc(broadcastRepository: mockBroadcastRepository),
         seed: () => BroadcastState(
@@ -148,6 +153,8 @@ void main() {
               )).thenAnswer((_) async => testBroadcasts.first);
           when(() => mockBroadcastRepository.getBroadcasts(page: any(named: 'page')))
               .thenAnswer((_) async => testBroadcasts);
+          when(() => mockBroadcastRepository.getBroadcastLimits())
+              .thenAnswer((_) async => BroadcastLimits.fallback());
         },
         build: () => BroadcastBloc(broadcastRepository: mockBroadcastRepository),
         act: (bloc) => bloc.add(const BroadcastCreateRequested(

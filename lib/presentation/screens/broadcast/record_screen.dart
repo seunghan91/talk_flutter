@@ -16,7 +16,8 @@ class RecordScreen extends StatefulWidget {
   State<RecordScreen> createState() => _RecordScreenState();
 }
 
-class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderStateMixin {
+class _RecordScreenState extends State<RecordScreen>
+    with SingleTickerProviderStateMixin {
   final VoiceRecordingService _recordingService = VoiceRecordingService();
 
   late AnimationController _pulseAnimationController;
@@ -28,6 +29,9 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
   String? _recordedFilePath;
   int? _recordedDurationSeconds;
   String? _errorMessage;
+
+  // Gender selection
+  String _selectedGender = 'female'; // 'male' | 'female' | 'all'
 
   // Max recording duration: 60 seconds
   static const int _maxDurationSeconds = 60;
@@ -118,7 +122,8 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
       setState(() {
         _state = RecordingState.recorded;
         _recordedFilePath = result.filePath;
-        _recordedDurationSeconds = result.durationSeconds ?? _recordingDuration.inSeconds;
+        _recordedDurationSeconds =
+            result.durationSeconds ?? _recordingDuration.inSeconds;
       });
     } else {
       setState(() {
@@ -159,11 +164,10 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
   void _sendBroadcast() {
     if (_recordedFilePath == null || _recordedDurationSeconds == null) return;
 
-    // Send broadcast via BLoC
     context.read<BroadcastBloc>().add(BroadcastCreateRequested(
       audioPath: _recordedFilePath!,
       duration: _recordedDurationSeconds!,
-      recipientCount: 5, // Default recipient count
+      recipientCount: 5,
     ));
 
     context.pop();
@@ -173,6 +177,9 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
         title: const Text('마이크 권한 필요'),
         content: const Text(
           '음성 녹음을 위해 마이크 권한이 필요합니다.\n설정에서 권한을 허용해주세요.',
@@ -180,9 +187,18 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
+            child: Text(
+              '취소',
+              style: TextStyle(color: context.mutedForegroundColor),
+            ),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+            ),
             onPressed: () {
               Navigator.pop(context);
               _recordingService.openSettings();
@@ -199,205 +215,6 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return '$minutes:$seconds';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocListener<BroadcastBloc, BroadcastState>(
-      listener: (context, state) {
-        if (state.status == BroadcastStatus.error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage ?? '전송에 실패했습니다'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('새 브로드캐스트'),
-          leading: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () async {
-              final navigator = GoRouter.of(context);
-              if (_state == RecordingState.recording) {
-                await _cancelRecording();
-              } else if (_recordedFilePath != null) {
-                await _recordingService.deleteRecording(_recordedFilePath!);
-              }
-              if (!mounted) return;
-              navigator.pop();
-            },
-          ),
-        ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              children: [
-                const Spacer(),
-
-                // Recording visualization
-                _buildRecordingVisualization(),
-
-                AppSpacing.verticalXxl,
-
-                // Timer
-                Text(
-                  _formatDuration(_recordingDuration),
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                ),
-
-                AppSpacing.verticalXs,
-
-                // Status text
-                Text(
-                  _getStatusText(),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: _state == RecordingState.error ||
-                                _state == RecordingState.permissionDenied
-                            ? Theme.of(context).colorScheme.error
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-
-                const Spacer(),
-
-                // Recording controls
-                _buildRecordingControls(),
-
-                AppSpacing.verticalXxl,
-
-                // Progress indicator
-                if (_state == RecordingState.recording)
-                  Column(
-                    children: [
-                      LinearProgressIndicator(
-                        value: _recordingDuration.inSeconds / _maxDurationSeconds,
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      ),
-                      AppSpacing.verticalXs,
-                      Text(
-                        '${_maxDurationSeconds - _recordingDuration.inSeconds}초 남음',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ],
-                  )
-                else
-                  Text(
-                    '최대 $_maxDurationSeconds초까지 녹음할 수 있습니다',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-
-                AppSpacing.verticalMd,
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecordingVisualization() {
-    final isRecording = _state == RecordingState.recording;
-    final isRecorded = _state == RecordingState.recorded;
-    final hasError = _state == RecordingState.error ||
-        _state == RecordingState.permissionDenied;
-
-    // Show waveform during recording
-    if (isRecording && _recordingService.recorderController != null) {
-      return Container(
-        height: 200,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        child: AudioWaveforms(
-          size: Size(MediaQuery.of(context).size.width - 80, 150),
-          recorderController: _recordingService.recorderController!,
-          waveStyle: WaveStyle(
-            waveColor: Theme.of(context).colorScheme.error,
-            extendWaveform: true,
-            showMiddleLine: false,
-            spacing: 8.0,
-            waveThickness: 4.0,
-            showDurationLabel: false,
-            durationStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 14,
-            ),
-          ),
-          enableGesture: false,
-        ),
-      );
-    }
-
-    // Show animated circle for idle/recorded states
-    return AnimatedBuilder(
-      animation: _pulseAnimationController,
-      builder: (context, child) {
-        final pulseValue = isRecording ? _pulseAnimationController.value * 30 : 0.0;
-
-        return Container(
-          width: 200 + pulseValue,
-          height: 200 + pulseValue,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: hasError
-                ? Theme.of(context).colorScheme.errorContainer
-                : isRecorded
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : Theme.of(context).colorScheme.surfaceContainerHighest,
-          ),
-          child: Center(
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: hasError
-                    ? Theme.of(context).colorScheme.error.withValues(alpha: 0.2)
-                    : isRecorded
-                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
-                        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-              ),
-              child: Icon(
-                _getStateIcon(),
-                size: AppIconSize.hero,
-                color: hasError
-                    ? Theme.of(context).colorScheme.error
-                    : isRecorded
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  IconData _getStateIcon() {
-    switch (_state) {
-      case RecordingState.idle:
-      case RecordingState.starting:
-        return Icons.mic_none;
-      case RecordingState.recording:
-        return Icons.mic;
-      case RecordingState.stopping:
-        return Icons.hourglass_empty;
-      case RecordingState.recorded:
-        return Icons.check_circle;
-      case RecordingState.error:
-      case RecordingState.permissionDenied:
-        return Icons.error_outline;
-    }
   }
 
   String _getStatusText() {
@@ -419,115 +236,514 @@ class _RecordScreenState extends State<RecordScreen> with SingleTickerProviderSt
     }
   }
 
-  Widget _buildRecordingControls() {
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<BroadcastBloc, BroadcastState>(
+      listener: (context, state) {
+        if (state.status == BroadcastStatus.error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage ?? '전송에 실패했습니다'),
+              backgroundColor: AppColors.primary,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Custom header
+              _buildHeader(),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    children: [
+                      AppSpacing.verticalSm,
+
+                      // Gender selector card
+                      _buildGenderSelectorCard(),
+                      AppSpacing.verticalMd,
+
+                      // Recorder card
+                      _buildRecorderCard(),
+
+                      AppSpacing.verticalMd,
+
+                      // Remaining time hint
+                      if (_state == RecordingState.recording)
+                        Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(AppRadius.full),
+                              child: LinearProgressIndicator(
+                                value: _recordingDuration.inSeconds /
+                                    _maxDurationSeconds,
+                                backgroundColor: context.mutedColor,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                    AppColors.primary),
+                                minHeight: 4,
+                              ),
+                            ),
+                            AppSpacing.verticalXs,
+                            Text(
+                              '${_maxDurationSeconds - _recordingDuration.inSeconds}초 남음',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: context.mutedForegroundColor,
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Text(
+                          '최대 $_maxDurationSeconds초까지 녹음할 수 있습니다',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.mutedForegroundColor,
+                          ),
+                        ),
+
+                      AppSpacing.verticalXxl,
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        border: Border(
+          bottom: BorderSide(color: context.borderColor, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.close, size: 20),
+            color: context.textPrimary,
+            onPressed: () async {
+              final navigator = GoRouter.of(context);
+              if (_state == RecordingState.recording) {
+                await _cancelRecording();
+              } else if (_recordedFilePath != null) {
+                await _recordingService.deleteRecording(_recordedFilePath!);
+              }
+              if (!mounted) return;
+              navigator.pop();
+            },
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                '새 보이스 보내기',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: context.textPrimary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenderSelectorCard() {
+    return _DesignCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '보낼 대상 성별',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: context.mutedForegroundColor,
+            ),
+          ),
+          AppSpacing.verticalSm,
+          Row(
+            children: [
+              Expanded(
+                child: _GenderButton(
+                  label: '여성',
+                  icon: Icons.female_rounded,
+                  isSelected: _selectedGender == 'female',
+                  onTap: () => setState(() => _selectedGender = 'female'),
+                ),
+              ),
+              AppSpacing.horizontalSm,
+              Expanded(
+                child: _GenderButton(
+                  label: '남성',
+                  icon: Icons.male_rounded,
+                  isSelected: _selectedGender == 'male',
+                  onTap: () => setState(() => _selectedGender = 'male'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecorderCard() {
+    final isRecording = _state == RecordingState.recording;
+    final isRecorded = _state == RecordingState.recorded;
+    final hasError = _state == RecordingState.error ||
+        _state == RecordingState.permissionDenied;
+    final isProcessing = _state == RecordingState.starting ||
+        _state == RecordingState.stopping;
     final isIdle = _state == RecordingState.idle ||
         _state == RecordingState.error ||
         _state == RecordingState.permissionDenied;
-    final isRecording = _state == RecordingState.recording;
-    final isRecorded = _state == RecordingState.recorded;
-    final isProcessing = _state == RecordingState.starting ||
-        _state == RecordingState.stopping;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        // Reset/Cancel button
-        if (isRecorded)
-          IconButton.filled(
-            onPressed: _resetRecording,
-            icon: const Icon(Icons.refresh),
-            iconSize: AppIconSize.xl,
-            style: IconButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-              foregroundColor: Theme.of(context).colorScheme.onSurface,
-              minimumSize: const Size(AppIconSize.hero, AppIconSize.hero),
-            ),
-          )
-        else if (isRecording)
-          IconButton.filled(
-            onPressed: _cancelRecording,
-            icon: const Icon(Icons.close),
-            iconSize: AppIconSize.xl,
-            style: IconButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.errorContainer,
-              foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
-              minimumSize: const Size(AppIconSize.hero, AppIconSize.hero),
-            ),
-          )
-        else
-          const SizedBox(width: AppIconSize.hero),
+    return _DesignCard(
+      child: Column(
+        children: [
+          AppSpacing.verticalSm,
 
-        // Main record/stop button
-        Material(
-          shape: const CircleBorder(),
-          color: isProcessing
-              ? Theme.of(context).colorScheme.surfaceContainerHighest
-              : isRecording
-                  ? Theme.of(context).colorScheme.error
-                  : isRecorded
-                      ? Theme.of(context).colorScheme.surfaceContainerHighest
-                      : Theme.of(context).colorScheme.primary,
-          elevation: isProcessing || isRecorded ? 0 : 8,
-          shadowColor: isRecording
-              ? Theme.of(context).colorScheme.error.withValues(alpha: 0.3)
-              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-          child: InkWell(
-            onTap: isProcessing
-                ? null
-                : (isRecording ? _stopRecording : (isIdle ? _startRecording : null)),
-            customBorder: const CircleBorder(),
-            child: SizedBox(
-              width: AppIconSize.heroLarge,
-              height: AppIconSize.heroLarge,
-              child: isProcessing
-                  ? Center(
-                      child: SizedBox(
-                        width: AppIconSize.xl,
-                        height: AppIconSize.xl,
-                        child: const CircularProgressIndicator(strokeWidth: 3),
-                      ),
-                    )
-                  : Icon(
-                      isRecording ? Icons.stop : Icons.mic,
-                      color: isRecorded
-                          ? Theme.of(context).colorScheme.onSurfaceVariant
-                          : Theme.of(context).colorScheme.onPrimary,
-                      size: AppIconSize.xl + AppIconSize.xs,
-                    ),
-            ),
-          ),
-        ),
-
-        // Send button
-        if (isRecorded)
-          BlocBuilder<BroadcastBloc, BroadcastState>(
-            builder: (context, state) {
-              final isSending = state.status == BroadcastStatus.creating;
-
-              return IconButton.filled(
-                onPressed: isSending ? null : _sendBroadcast,
-                icon: isSending
-                    ? SizedBox(
-                        width: AppIconSize.lg,
-                        height: AppIconSize.lg,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                      )
-                    : const Icon(Icons.send),
-                iconSize: AppIconSize.xl,
-                style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  minimumSize: const Size(AppIconSize.hero, AppIconSize.hero),
+          // Waveform or mic visualization
+          if (isRecording && _recordingService.recorderController != null)
+            SizedBox(
+              height: 80,
+              child: AudioWaveforms(
+                size: Size(MediaQuery.of(context).size.width - 80, 70),
+                recorderController: _recordingService.recorderController!,
+                waveStyle: WaveStyle(
+                  waveColor: AppColors.primary,
+                  extendWaveform: true,
+                  showMiddleLine: false,
+                  spacing: 8.0,
+                  waveThickness: 4.0,
+                  showDurationLabel: false,
+                  durationStyle: TextStyle(
+                    color: context.textPrimary,
+                    fontSize: 14,
+                  ),
                 ),
+                enableGesture: false,
+              ),
+            )
+          else
+            const SizedBox(height: 16),
+
+          AppSpacing.verticalMd,
+
+          // Large mic button with pulse
+          AnimatedBuilder(
+            animation: _pulseAnimationController,
+            builder: (context, child) {
+              final pulse = isRecording
+                  ? _pulseAnimationController.value * 16.0
+                  : 0.0;
+
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Pulse ring
+                  if (isRecording)
+                    Container(
+                      width: 80 + pulse * 2,
+                      height: 80 + pulse * 2,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                      ),
+                    ),
+                  // Main button
+                  Material(
+                    shape: const CircleBorder(),
+                    color: isProcessing
+                        ? context.mutedColor
+                        : isRecorded
+                            ? context.mutedColor
+                            : isRecording
+                                ? AppColors.primary
+                                : AppColors.primary,
+                    elevation: isProcessing || isRecorded ? 0 : 6,
+                    shadowColor: AppColors.primary.withValues(alpha: 0.35),
+                    child: InkWell(
+                      onTap: isProcessing
+                          ? null
+                          : isRecording
+                              ? _stopRecording
+                              : isIdle
+                                  ? _startRecording
+                                  : null,
+                      customBorder: const CircleBorder(),
+                      child: SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: isProcessing
+                            ? Center(
+                                child: SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                isRecording
+                                    ? Icons.stop_rounded
+                                    : isRecorded
+                                        ? Icons.check_rounded
+                                        : hasError
+                                            ? Icons.mic_off_rounded
+                                            : Icons.mic_rounded,
+                                color: isRecorded || hasError
+                                    ? context.mutedForegroundColor
+                                    : Colors.white,
+                                size: 36,
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               );
             },
-          )
-        else
-          const SizedBox(width: AppIconSize.hero),
-      ],
+          ),
+
+          AppSpacing.verticalMd,
+
+          // Duration timer
+          Text(
+            _formatDuration(_recordingDuration),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: context.textPrimary,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+
+          AppSpacing.verticalXs,
+
+          // Status text
+          Text(
+            _getStatusText(),
+            style: TextStyle(
+              fontSize: 13,
+              color: hasError ? AppColors.primary : context.mutedForegroundColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+
+          AppSpacing.verticalMd,
+
+          // Control row: reset | (gap) | send
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // Reset / Cancel
+              if (isRecorded)
+                _ControlButton(
+                  icon: Icons.refresh_rounded,
+                  label: '다시',
+                  backgroundColor: context.mutedColor,
+                  foregroundColor: context.mutedForegroundColor,
+                  onPressed: _resetRecording,
+                )
+              else if (isRecording)
+                _ControlButton(
+                  icon: Icons.close_rounded,
+                  label: '취소',
+                  backgroundColor: context.mutedColor,
+                  foregroundColor: AppColors.primary,
+                  onPressed: _cancelRecording,
+                )
+              else
+                const SizedBox(width: 72),
+
+              const SizedBox(width: AppSpacing.xxl),
+
+              // Send
+              if (isRecorded)
+                BlocBuilder<BroadcastBloc, BroadcastState>(
+                  builder: (context, state) {
+                    final isSending = state.status == BroadcastStatus.creating;
+                    return _ControlButton(
+                      icon: Icons.send_rounded,
+                      label: '보내기',
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      onPressed: isSending ? () {} : _sendBroadcast,
+                      isLoading: isSending,
+                    );
+                  },
+                )
+              else
+                const SizedBox(width: 72),
+            ],
+          ),
+
+          AppSpacing.verticalSm,
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Design card helper ────────────────────────────────────────────────────────
+
+class _DesignCard extends StatelessWidget {
+  final Widget child;
+
+  const _DesignCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: context.borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: context.shadowColor,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+// ─── Gender button ────────────────────────────────────────────────────────────
+
+class _GenderButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _GenderButton({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : context.borderColor,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? AppColors.primary : context.mutedForegroundColor,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? AppColors.primary : context.mutedForegroundColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Control button (reset / send) ────────────────────────────────────────────
+
+class _ControlButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final VoidCallback onPressed;
+  final bool isLoading;
+
+  const _ControlButton({
+    required this.icon,
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.onPressed,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isLoading ? null : onPressed,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              shape: BoxShape.circle,
+            ),
+            child: isLoading
+                ? Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: foregroundColor,
+                      ),
+                    ),
+                  )
+                : Icon(icon, color: foregroundColor, size: 22),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: context.mutedForegroundColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

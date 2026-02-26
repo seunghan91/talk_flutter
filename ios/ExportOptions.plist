@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store-connect</string>
+    <key>teamID</key>
+    <string>74PTNNLD4P</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>stripSwiftSymbols</key>
+    <true/>
+    <key>uploadSymbols</key>
+    <true/>
+    <key>authenticationKeyID</key>
+    <string>BS4SD32G2U</string>
+    <key>authenticationKeyIssuerID</key>
+    <string>213dd70a-f512-449a-b36f-86655445cec4</string>
+    <key>authenticationKeyPath</key>
+    <string>/Users/seunghan/.appstoreconnect/private_keys/AuthKey_BS4SD32G2U.p8</string>
+</dict>
+</plist>

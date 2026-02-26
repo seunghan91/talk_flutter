@@ -14,7 +14,6 @@ import 'package:talk_flutter/presentation/screens/conversation/conversation_scre
 import 'package:talk_flutter/presentation/screens/feedback/feedback_screen.dart';
 import 'package:talk_flutter/presentation/screens/home/home_screen.dart';
 import 'package:talk_flutter/presentation/screens/home/main_scaffold.dart';
-import 'package:talk_flutter/presentation/screens/market/market_screen.dart';
 import 'package:talk_flutter/presentation/screens/messages/messages_screen.dart';
 import 'package:talk_flutter/presentation/screens/notifications/notification_screen.dart';
 import 'package:talk_flutter/presentation/screens/profile/profile_screen.dart';
@@ -92,10 +91,10 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
           ),
         ),
         GoRoute(
-          path: '/market',
-          name: 'market',
+          path: '/wallet',
+          name: 'wallet',
           pageBuilder: (context, state) => const NoTransitionPage(
-            child: MarketScreen(),
+            child: WalletScreen(),
           ),
         ),
         GoRoute(
@@ -217,11 +216,11 @@ GoRouter createAppRouter(AuthBloc authBloc) => GoRouter(
       builder: (context, state) => const NotificationScreen(),
     ),
 
-    // ============ Wallet Routes ============
+    // ============ Market (legacy redirect) ============
     GoRoute(
-      path: '/wallet',
-      name: 'wallet',
-      builder: (context, state) => const WalletScreen(),
+      path: '/market',
+      name: 'market',
+      redirect: (context, state) => '/wallet',
     ),
 
     // ============ Report Routes ============

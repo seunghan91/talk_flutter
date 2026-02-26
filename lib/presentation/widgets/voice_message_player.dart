@@ -2,7 +2,8 @@ import 'dart:async';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:talk_flutter/core/theme/theme.dart';
+import 'package:talk_flutter/core/theme/app_colors.dart';
+import 'package:talk_flutter/core/theme/app_spacing.dart';
 import 'package:talk_flutter/data/services/audio_cache_service.dart';
 
 /// Voice message player widget with waveform visualization
@@ -15,6 +16,9 @@ class VoiceMessagePlayer extends StatefulWidget {
   final String? sourceType;
   final int? sourceId;
 
+  /// When true, renders in standalone broadcast mode (large 64px button)
+  final bool isStandalone;
+
   const VoiceMessagePlayer({
     super.key,
     required this.audioUrl,
@@ -23,6 +27,7 @@ class VoiceMessagePlayer extends StatefulWidget {
     this.onPlayStateChanged,
     this.sourceType,
     this.sourceId,
+    this.isStandalone = false,
   });
 
   @override
@@ -71,7 +76,8 @@ class _VoiceMessagePlayerState extends State<VoiceMessagePlayer> {
 
       _totalDuration = _playerController.maxDuration;
 
-      _playerStateSubscription = _playerController.onPlayerStateChanged.listen((state) {
+      _playerStateSubscription =
+          _playerController.onPlayerStateChanged.listen((state) {
         if (!mounted) return;
 
         setState(() {
@@ -85,7 +91,8 @@ class _VoiceMessagePlayerState extends State<VoiceMessagePlayer> {
         }
       });
 
-      _durationSubscription = _playerController.onCurrentDurationChanged.listen((duration) {
+      _durationSubscription =
+          _playerController.onCurrentDurationChanged.listen((duration) {
         if (!mounted) return;
         setState(() {
           _currentPosition = duration;
@@ -120,6 +127,12 @@ class _VoiceMessagePlayerState extends State<VoiceMessagePlayer> {
     }
   }
 
+  Future<void> _replay() async {
+    if (!_isPrepared || _hasError) return;
+    await _playerController.seekTo(0);
+    await _playerController.startPlayer();
+  }
+
   String _formatDuration(int milliseconds) {
     final seconds = (milliseconds / 1000).floor();
     final minutes = seconds ~/ 60;
@@ -127,43 +140,35 @@ class _VoiceMessagePlayerState extends State<VoiceMessagePlayer> {
     return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
+  int get _displayTotalMs =>
+      widget.durationSeconds != null
+          ? widget.durationSeconds! * 1000
+          : _totalDuration;
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // Colors based on message sender
-    final backgroundColor = widget.isSentByMe
-        ? colorScheme.primaryContainer
-        : colorScheme.surfaceContainerHighest;
-    final foregroundColor = widget.isSentByMe
-        ? colorScheme.onPrimaryContainer
-        : colorScheme.onSurface;
-    final waveColor = widget.isSentByMe
-        ? colorScheme.primary
-        : colorScheme.tertiary;
-
     if (_hasError) {
       return Semantics(
         label: '음성 메시지 재생 오류',
         child: Container(
-          padding: const EdgeInsets.all(AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
           decoration: BoxDecoration(
-            color: colorScheme.errorContainer,
-            borderRadius: AppRadius.largeRadius,
+            color: const Color(0xFFFEE2E2),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
-                color: colorScheme.onErrorContainer,
+                color: AppColors.error,
                 size: AppIconSize.md,
-                semanticLabel: '오류 아이콘',
               ),
               AppSpacing.horizontalXs,
-              Text(
+              const Text(
                 '재생할 수 없음',
-                style: TextStyle(color: colorScheme.onErrorContainer),
+                style: TextStyle(color: AppColors.error, fontSize: 13),
               ),
             ],
           ),
@@ -171,106 +176,311 @@ class _VoiceMessagePlayerState extends State<VoiceMessagePlayer> {
       );
     }
 
+    if (widget.isStandalone) {
+      return _buildStandalonePlayer();
+    }
+
+    return _buildChatPlayer();
+  }
+
+  // -------------------------------------------------------------------------
+  // Standalone (broadcast) player - large 64px button
+  // -------------------------------------------------------------------------
+  Widget _buildStandalonePlayer() {
     return Semantics(
       label: '음성 메시지 플레이어',
       hint: _isPlaying ? '탭하여 일시정지' : '탭하여 재생',
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
-        ),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: AppRadius.largeRadius,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Play/Pause button
-            Tooltip(
-              message: _isPlaying ? '일시정지' : '재생',
-              child: Semantics(
-                button: true,
-                label: _isPlaying ? '일시정지' : '재생',
-                child: GestureDetector(
-                  onTap: _togglePlayPause,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: waveColor,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Large play/pause button
+          GestureDetector(
+            onTap: _togglePlayPause,
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary,
+              ),
+              child: !_isPrepared
+                  ? const Padding(
+                      padding: EdgeInsets.all(18),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Icon(
+                      _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 32,
+                      semanticLabel: _isPlaying ? '일시정지' : '재생',
                     ),
-                    child: !_isPrepared
-                        ? Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: colorScheme.onPrimary,
-                            ),
-                          )
-                        : Icon(
-                            _isPlaying ? Icons.pause : Icons.play_arrow,
-                            color: colorScheme.onPrimary,
-                            size: AppIconSize.lg,
-                          ),
-                  ),
+            ),
+          ),
+          AppSpacing.verticalSm,
+
+          // Waveform
+          if (_isPrepared)
+            SizedBox(
+              width: 200,
+              height: 36,
+              child: AudioFileWaveforms(
+                size: const Size(200, 36),
+                playerController: _playerController,
+                enableSeekGesture: true,
+                playerWaveStyle: PlayerWaveStyle(
+                  fixedWaveColor: AppColors.primary.withValues(alpha: 0.25),
+                  liveWaveColor: AppColors.primary,
+                  spacing: 4,
+                  waveThickness: 3,
+                  seekLineColor: AppColors.primary,
+                  showSeekLine: false,
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              width: 200,
+              height: 36,
+              child: Center(
+                child: LinearProgressIndicator(
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                  color: AppColors.primary,
                 ),
               ),
             ),
+          AppSpacing.verticalXs,
 
-            AppSpacing.horizontalXs,
+          // Time + replay row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Current / total time
+              Text(
+                '${_formatDuration(_currentPosition)} / ${_formatDuration(_displayTotalMs)}',
+                style: const TextStyle(
+                  color: AppColors.mutedForeground,
+                  fontSize: 12,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
+              ),
+              AppSpacing.horizontalSm,
 
-            // Waveform or progress
-            if (_isPrepared)
-              Flexible(
-                child: SizedBox(
-                  width: 150,
-                  height: 40,
+              // Replay button
+              GestureDetector(
+                onTap: _isPrepared ? _replay : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs, vertical: AppSpacing.xxs),
+                  decoration: BoxDecoration(
+                    color: AppColors.muted,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Transform.rotate(
+                        angle: -0.5,
+                        child: const Icon(
+                          Icons.replay_rounded,
+                          size: 12,
+                          color: AppColors.mutedForeground,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Text(
+                        '다시듣기',
+                        style: TextStyle(
+                          color: AppColors.mutedForeground,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Chat bubble player - compact with isSentByMe styling
+  // -------------------------------------------------------------------------
+  Widget _buildChatPlayer() {
+    // Button styling per sender context
+    final Color buttonBg = widget.isSentByMe
+        ? Colors.white.withValues(alpha: 0.2)
+        : AppColors.primary.withValues(alpha: 0.1);
+    final Color iconColor =
+        widget.isSentByMe ? Colors.white : AppColors.primary;
+
+    // Progress bar colors
+    final Color progressPlayed =
+        widget.isSentByMe ? Colors.white : AppColors.primary;
+    final Color progressRemaining = widget.isSentByMe
+        ? Colors.white.withValues(alpha: 0.3)
+        : AppColors.neutral300;
+
+    // Time text color
+    final Color timeColor = widget.isSentByMe
+        ? Colors.white.withValues(alpha: 0.9)
+        : AppColors.mutedForeground;
+
+    return Semantics(
+      label: '음성 메시지 플레이어',
+      hint: _isPlaying ? '탭하여 일시정지' : '탭하여 재생',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Play/Pause button - 40px in chat
+              Tooltip(
+                message: _isPlaying ? '일시정지' : '재생',
+                child: Semantics(
+                  button: true,
+                  label: _isPlaying ? '일시정지' : '재생',
+                  child: GestureDetector(
+                    onTap: _togglePlayPause,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: buttonBg,
+                      ),
+                      child: !_isPrepared
+                          ? Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: iconColor,
+                              ),
+                            )
+                          : Icon(
+                              _isPlaying
+                                  ? Icons.pause_rounded
+                                  : Icons.play_arrow_rounded,
+                              color: iconColor,
+                              size: AppIconSize.lg,
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+
+              AppSpacing.horizontalXs,
+
+              // Waveform
+              if (_isPrepared)
+                SizedBox(
+                  width: 120,
+                  height: 36,
                   child: AudioFileWaveforms(
-                    size: const Size(150, 40),
+                    size: const Size(120, 36),
                     playerController: _playerController,
                     enableSeekGesture: true,
                     playerWaveStyle: PlayerWaveStyle(
-                      fixedWaveColor: waveColor.withValues(alpha: 0.3),
-                      liveWaveColor: waveColor,
+                      fixedWaveColor: progressRemaining,
+                      liveWaveColor: progressPlayed,
                       spacing: 4,
                       waveThickness: 3,
-                      seekLineColor: waveColor,
+                      seekLineColor: progressPlayed,
                       showSeekLine: false,
                     ),
                   ),
-                ),
-              )
-            else
-              SizedBox(
-                width: 150,
-                height: 40,
-                child: Center(
-                  child: LinearProgressIndicator(
-                    backgroundColor: waveColor.withValues(alpha: 0.2),
-                    color: waveColor,
+                )
+              else
+                SizedBox(
+                  width: 120,
+                  height: 36,
+                  child: Center(
+                    child: LinearProgressIndicator(
+                      backgroundColor: progressRemaining,
+                      color: progressPlayed,
+                    ),
                   ),
                 ),
+
+              AppSpacing.horizontalXs,
+
+              // Time column: current / total
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _formatDuration(_currentPosition),
+                    style: TextStyle(
+                      color: timeColor,
+                      fontSize: 11,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  Text(
+                    _formatDuration(_displayTotalMs),
+                    style: TextStyle(
+                      color: timeColor.withValues(alpha: 0.6),
+                      fontSize: 10,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
               ),
+            ],
+          ),
 
-            AppSpacing.horizontalXs,
-
-            // Duration
-            Text(
-              _isPlaying
-                  ? _formatDuration(_currentPosition)
-                  : _formatDuration(widget.durationSeconds != null
-                      ? widget.durationSeconds! * 1000
-                      : _totalDuration),
-              style: TextStyle(
-                color: foregroundColor,
-                fontSize: 12,
-                fontFeatures: const [FontFeature.tabularFigures()],
+          // Progress bar (thin, 2px)
+          const SizedBox(height: 6),
+          SizedBox(
+            width: 180,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              child: LinearProgressIndicator(
+                value: _totalDuration > 0
+                    ? _currentPosition / _totalDuration
+                    : 0,
+                minHeight: 2,
+                backgroundColor: progressRemaining,
+                color: progressPlayed,
               ),
             ),
-          ],
-        ),
+          ),
+
+          // Replay button
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: _isPrepared ? _replay : null,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Transform.rotate(
+                  angle: -0.5,
+                  child: Icon(
+                    Icons.replay_rounded,
+                    size: 11,
+                    color: timeColor.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  '다시듣기',
+                  style: TextStyle(
+                    color: timeColor.withValues(alpha: 0.7),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

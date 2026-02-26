@@ -74,6 +74,16 @@ class AuthLogoutRequested extends AuthEvent {
   const AuthLogoutRequested();
 }
 
+/// Dev bypass: Firebase 없이 서버에 직접 인증 처리 (테스트용)
+class AuthDevBypassVerificationRequested extends AuthEvent {
+  final String phoneNumber;
+
+  const AuthDevBypassVerificationRequested({required this.phoneNumber});
+
+  @override
+  List<Object?> get props => [phoneNumber];
+}
+
 /// User data updated (from profile edit, etc.)
 class AuthUserUpdated extends AuthEvent {
   final User user;

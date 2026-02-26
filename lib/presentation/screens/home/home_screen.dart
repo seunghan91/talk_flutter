@@ -31,7 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     context.read<BroadcastBloc>().add(const BroadcastListRequested(refresh: true));
     context.read<BroadcastBloc>().add(const BroadcastLimitsRequested());
-    // Wallet 정보도 로드
     try {
       context.read<WalletBloc>().add(const WalletRequested());
     } catch (_) {
@@ -45,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final authState = context.read<AuthBloc>().state;
     final broadcastState = context.read<BroadcastBloc>().state;
 
-    // 선택한 성별로 필터링된 브로드캐스트 찾기
     final filtered = broadcastState.broadcasts
         .where((b) => b.userId != authState.user?.id)
         .where((b) =>
@@ -54,14 +52,12 @@ class _HomeScreenState extends State<HomeScreen> {
         .toList();
 
     if (filtered.isNotEmpty) {
-      // 랜덤 또는 가장 최근 브로드캐스트 선택
       filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       setState(() {
         _currentBroadcast = filtered.first;
         _viewMode = _ViewMode.listening;
       });
     } else {
-      // 해당 성별의 보이스가 없는 경우
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('아직 새로운 보이스가 없어요. 조금만 기다려주세요!'),
@@ -118,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return BlocConsumer<BroadcastBloc, BroadcastState>(
       listenWhen: (previous, current) {
         return (current.status == BroadcastStatus.error &&
-            previous.errorMessage != current.errorMessage) ||
+                previous.errorMessage != current.errorMessage) ||
             (!previous.createSucceeded && current.createSucceeded);
       },
       listener: (context, state) {
@@ -139,9 +135,10 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: AppColors.backgroundLight,
+          backgroundColor: Colors.transparent,
           body: SafeArea(
             child: RefreshIndicator(
+              color: AppColors.primary,
               onRefresh: () async {
                 context
                     .read<BroadcastBloc>()
@@ -150,12 +147,9 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: CustomScrollView(
                 slivers: [
-                  // Header
                   SliverToBoxAdapter(
                     child: _buildHeader(context),
                   ),
-
-                  // Main Content
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: AnimatedSwitcher(
@@ -176,10 +170,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// 상단 헤더 (타이틀 + 통계)
+  /// 상단 헤더 - 앱 타이틀 + 통계 배지
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(
+      padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,
         AppSpacing.md,
         AppSpacing.md,
@@ -204,7 +198,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 builder: (context, state) {
                   return _StatBadge(
                     icon: Icons.mail_outline,
-                    iconColor: AppColors.primary,
                     value: '${state.limits.dailyRemaining}',
                   );
                 },
@@ -215,7 +208,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 builder: (context, walletState) {
                   return _StatBadge(
                     icon: Icons.monetization_on_outlined,
-                    iconColor: AppColors.warning,
                     value: '${walletState.balance}',
                   );
                 },
@@ -224,22 +216,9 @@ class _HomeScreenState extends State<HomeScreen> {
               // 알림 벨
               BlocBuilder<NotificationBloc, NotificationState>(
                 builder: (context, state) {
-                  return IconButton(
-                    onPressed: () => context.push('/notifications'),
-                    icon: Badge(
-                      isLabelVisible: state.unreadCount > 0,
-                      label: Text(
-                        state.unreadCount > 99
-                            ? '99+'
-                            : '${state.unreadCount}',
-                        style: AppTypography.badge(),
-                      ),
-                      child: const Icon(Icons.notifications_outlined),
-                    ),
-                    style: IconButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(40, 40),
-                    ),
+                  return _NotificationButton(
+                    unreadCount: state.unreadCount,
+                    onTap: () => context.push('/notifications'),
                   );
                 },
               ),
@@ -257,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return BlocBuilder<BroadcastBloc, BroadcastState>(
           builder: (context, broadcastState) {
             return SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -286,8 +265,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       setState(() => _selectedGender = gender);
                     },
                     buttonText: '새로운 보이스 받기',
-                    buttonColor: AppColors.primary,
-                    buttonTextColor: Colors.white,
                     onButtonPressed:
                         _selectedGender != null ? _handleReceiveVoice : null,
                     isLoading: broadcastState.isLoading,
@@ -299,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _ActionCard(
                     icon: Icons.mic_rounded,
                     iconBackgroundColor:
-                        AppColors.secondaryLight.withValues(alpha: 0.3),
+                        AppColors.accent.withValues(alpha: 0.5),
                     iconColor: AppColors.primary,
                     title: '내 보이스 보내기',
                     subtitle: '마음을 담아 목소리를 전해보세요',
@@ -311,8 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       setState(() => _selectedGender = gender);
                     },
                     buttonText: '보이스 녹음하기',
-                    buttonColor: AppColors.secondaryLight,
-                    buttonTextColor: AppColors.textPrimaryLight,
+                    isPrimaryButton: false,
                     onButtonPressed: _selectedGender != null &&
                             broadcastState.limits.canBroadcast
                         ? _handleStartRecording
@@ -321,8 +297,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   AppSpacing.verticalMd,
 
-                  // 안내 박스
-                  _InfoBox(
+                  // 안내 배너
+                  _InfoBanner(
                     remaining: broadcastState.limits.dailyRemaining,
                     limit: broadcastState.limits.dailyLimit,
                   ),
@@ -342,39 +318,22 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_currentBroadcast == null) return const SizedBox.shrink();
 
     final broadcast = _currentBroadcast!;
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
         children: [
           AppSpacing.verticalLg,
 
           // 보이스 카드
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(AppSpacing.xl),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.15),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
+          _DesignCard(
             child: Column(
               children: [
-                // 발신자 정보
+                // 발신자 아바타
                 Container(
                   width: 80,
                   height: 80,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     gradient: AppColors.primaryGradient,
                     shape: BoxShape.circle,
                   ),
@@ -399,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   _formatDate(broadcast.createdAt),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textTertiaryLight,
+                        color: context.mutedForegroundColor,
                       ),
                 ),
 
@@ -415,21 +374,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 else
                   Container(
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.lg,
                       vertical: AppSpacing.md,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.neutral100,
+                      color: context.mutedColor,
                       borderRadius: AppRadius.extraLargeRadius,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.mic,
-                          color: AppColors.primary,
-                        ),
+                        const Icon(Icons.mic, color: AppColors.primary),
                         AppSpacing.horizontalSm,
                         Text(
                           broadcast.formattedDuration,
@@ -439,7 +395,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                // 텍스트 내용
                 if (broadcast.content != null &&
                     broadcast.content!.isNotEmpty) ...[
                   AppSpacing.verticalMd,
@@ -457,7 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           AppSpacing.verticalXl,
 
-          // 액션 버튼들 (A안: 동급 위계 3버튼)
+          // 액션 버튼 3개
           Row(
             children: [
               Expanded(
@@ -493,27 +448,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// 녹음 화면
   Widget _buildRecordingView(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
         children: [
           AppSpacing.verticalLg,
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.neutral200),
-              boxShadow: [
-                BoxShadow(
-                  color: context.shadowColor,
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+          _DesignCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -528,7 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   '마음을 담아 목소리를 들려주세요',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textTertiaryLight,
+                        color: context.mutedForegroundColor,
                       ),
                   textAlign: TextAlign.center,
                 ),
@@ -553,6 +495,9 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             icon: const Icon(Icons.close),
             label: const Text('취소'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.mutedForeground,
+            ),
           ),
         ],
       ),
@@ -578,53 +523,129 @@ class _HomeScreenState extends State<HomeScreen> {
 // ==================== View Mode ====================
 enum _ViewMode { select, listening, recording }
 
+// ==================== Design Primitives ====================
+
+/// Standard card decoration used across all cards in the design system.
+/// White background, border (AppColors.border), elevation shadow.
+class _DesignCard extends StatelessWidget {
+  final Widget child;
+
+  const _DesignCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: context.borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: context.shadowColor,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
 // ==================== Sub Widgets ====================
 
-/// 통계 배지
+/// 헤더 통계 배지 - white card with border, icon + value
 class _StatBadge extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
   final String value;
 
   const _StatBadge({
     required this.icon,
-    required this.iconColor,
     required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: AppColors.neutral200,
-        ),
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
+            color: context.shadowColor,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: AppIconSize.md, color: iconColor),
+          Icon(icon, size: AppIconSize.md, color: AppColors.primary),
           AppSpacing.horizontalXs,
           Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
+                  color: AppColors.accentForeground,
                 ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 알림 버튼 with badge
+class _NotificationButton extends StatelessWidget {
+  final int unreadCount;
+  final VoidCallback onTap;
+
+  const _NotificationButton({
+    required this.unreadCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: context.borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: context.shadowColor,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        icon: Badge(
+          isLabelVisible: unreadCount > 0,
+          backgroundColor: AppColors.primary,
+          label: Text(
+            unreadCount > 99 ? '99+' : '$unreadCount',
+            style: const TextStyle(fontSize: 9, color: Colors.white),
+          ),
+          child: Icon(
+            Icons.notifications_outlined,
+            color: context.mutedForegroundColor,
+          ),
+        ),
+        style: IconButton.styleFrom(
+          padding: const EdgeInsets.all(AppSpacing.xs),
+          minimumSize: const Size(36, 36),
+        ),
       ),
     );
   }
@@ -638,23 +659,7 @@ class _WelcomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: AppColors.neutral200,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return _DesignCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -662,13 +667,14 @@ class _WelcomeCard extends StatelessWidget {
             '안녕하세요, $nickname님! 👋',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600,
+                  color: AppColors.accentForeground,
                 ),
           ),
           AppSpacing.verticalXs,
           Text(
             '오늘도 설레는 목소리를 주고받아보세요',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textTertiaryLight,
+                  color: context.mutedForegroundColor,
                 ),
           ),
         ],
@@ -690,8 +696,7 @@ class _ActionCard extends StatelessWidget {
   final String? selectedGender;
   final ValueChanged<String> onGenderSelected;
   final String buttonText;
-  final Color buttonColor;
-  final Color buttonTextColor;
+  final bool isPrimaryButton;
   final VoidCallback? onButtonPressed;
   final bool isLoading;
 
@@ -707,31 +712,14 @@ class _ActionCard extends StatelessWidget {
     required this.selectedGender,
     required this.onGenderSelected,
     required this.buttonText,
-    required this.buttonColor,
-    required this.buttonTextColor,
+    this.isPrimaryButton = true,
     required this.onButtonPressed,
     this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: AppColors.neutral200,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return _DesignCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -754,15 +742,15 @@ class _ActionCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style:
-                          Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.accentForeground,
+                          ),
                     ),
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textTertiaryLight,
+                            color: AppColors.mutedForeground,
                           ),
                     ),
                   ],
@@ -778,6 +766,7 @@ class _ActionCard extends StatelessWidget {
             genderLabel,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w500,
+                  color: AppColors.accentForeground,
                 ),
           ),
 
@@ -810,35 +799,70 @@ class _ActionCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             height: 48,
-            child: ElevatedButton(
-              onPressed: isLoading ? null : onButtonPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: buttonColor,
-                foregroundColor: buttonTextColor,
-                disabledBackgroundColor: buttonColor.withValues(alpha: 0.5),
-                disabledForegroundColor: buttonTextColor.withValues(alpha: 0.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                elevation: 0,
-              ),
-              child: isLoading
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: buttonTextColor,
+            child: isPrimaryButton
+                ? ElevatedButton(
+                    onPressed: isLoading ? null : onButtonPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor:
+                          AppColors.primary.withValues(alpha: 0.5),
+                      disabledForegroundColor:
+                          Colors.white.withValues(alpha: 0.7),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
-                    )
-                  : Text(
-                      buttonText,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                      elevation: 0,
+                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            buttonText,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                  )
+                : ElevatedButton(
+                    onPressed: isLoading ? null : onButtonPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      foregroundColor: AppColors.accentForeground,
+                      disabledBackgroundColor:
+                          AppColors.secondary.withValues(alpha: 0.4),
+                      disabledForegroundColor:
+                          AppColors.accentForeground.withValues(alpha: 0.5),
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                     ),
-            ),
+                    child: isLoading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.accentForeground,
+                            ),
+                          )
+                        : Text(
+                            buttonText,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                  ),
           ),
         ],
       ),
@@ -864,15 +888,15 @@ class _GenderButton extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary.withValues(alpha: 0.1)
-              : AppColors.neutral100,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+              : context.mutedColor,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.neutral200,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? AppColors.primary : context.borderColor,
+            width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Center(
@@ -881,8 +905,9 @@ class _GenderButton extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: isSelected
                       ? AppColors.primary
-                      : AppColors.textSecondaryLight,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      : context.mutedForegroundColor,
+                  fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
           ),
         ),
@@ -891,6 +916,7 @@ class _GenderButton extends StatelessWidget {
   }
 }
 
+/// 듣기 화면 액션 버튼
 class _ListeningActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -907,19 +933,19 @@ class _ListeningActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         decoration: BoxDecoration(
           color: emphasized
-              ? AppColors.primary.withValues(alpha: 0.12)
-              : AppColors.neutral100,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : context.mutedColor,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
             color: emphasized
-                ? AppColors.primary.withValues(alpha: 0.25)
-                : AppColors.neutral200,
+                ? AppColors.primary.withValues(alpha: 0.3)
+                : context.borderColor,
           ),
         ),
         child: Column(
@@ -927,9 +953,7 @@ class _ListeningActionButton extends StatelessWidget {
             Icon(
               icon,
               size: AppIconSize.md,
-              color: emphasized
-                  ? AppColors.primary
-                  : AppColors.textSecondaryLight,
+              color: emphasized ? AppColors.primary : AppColors.mutedForeground,
             ),
             AppSpacing.verticalXxs,
             Text(
@@ -937,7 +961,7 @@ class _ListeningActionButton extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: emphasized
                         ? AppColors.primary
-                        : AppColors.textSecondaryLight,
+                        : AppColors.mutedForeground,
                     fontWeight: FontWeight.w500,
                   ),
             ),
@@ -948,12 +972,12 @@ class _ListeningActionButton extends StatelessWidget {
   }
 }
 
-/// 안내 박스
-class _InfoBox extends StatelessWidget {
+/// 안내 배너 - accent/50 background, centered text, rounded-xl, border
+class _InfoBanner extends StatelessWidget {
   final int remaining;
   final int limit;
 
-  const _InfoBox({
+  const _InfoBanner({
     required this.remaining,
     required this.limit,
   });
@@ -962,18 +986,16 @@ class _InfoBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        color: context.accentColor,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: context.borderColor),
       ),
       child: Text(
         '💡 하루에 $limit개의 메시지를 보낼 수 있어요.\n현재 남은 횟수: $remaining개',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textTertiaryLight,
+              color: context.mutedForegroundColor,
               height: 1.5,
             ),
         textAlign: TextAlign.center,

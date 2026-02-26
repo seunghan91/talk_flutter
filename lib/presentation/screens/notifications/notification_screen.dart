@@ -23,20 +23,44 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
+      backgroundColor: context.mutedColor,
       appBar: AppBar(
-        title: const Text('알림'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: context.textPrimary,
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: Text(
+          '알림',
+          style: TextStyle(
+            color: context.textPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: false,
         actions: [
           BlocBuilder<NotificationBloc, NotificationState>(
             builder: (context, state) {
               if (state.unreadCount > 0) {
-                return TextButton(
-                  onPressed: () {
-                    context.read<NotificationBloc>().add(const NotificationMarkAllAsRead());
-                  },
-                  child: const Text('모두 읽음'),
+                return Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: TextButton(
+                    onPressed: () {
+                      context.read<NotificationBloc>().add(const NotificationMarkAllAsRead());
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    child: const Text('모두 읽음'),
+                  ),
                 );
               }
               return const SizedBox.shrink();
@@ -55,14 +79,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.errorMessage!),
-                  backgroundColor: colorScheme.error,
+                  backgroundColor: AppColors.error,
                 ),
               );
             }
           },
           builder: (context, state) {
             if (state.isLoading && state.notifications.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              );
             }
 
             if (!state.hasNotifications) {
@@ -70,16 +96,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
             }
 
             return RefreshIndicator(
+              color: AppColors.primary,
               onRefresh: () async {
-                context.read<NotificationBloc>().add(const NotificationListRequested(refresh: true));
+                context
+                    .read<NotificationBloc>()
+                    .add(const NotificationListRequested(refresh: true));
               },
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
                 itemCount: state.notifications.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: AppSpacing.xs),
                 itemBuilder: (context, index) {
                   final notification = state.notifications[index];
-                  return _NotificationTile(
+                  return _NotificationCard(
                     notification: notification,
                     onTap: () => _onNotificationTap(notification),
                   );
@@ -93,23 +126,39 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildEmptyState() {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.notifications_off_outlined,
-            size: AppIconSize.hero,
-            color: colorScheme.onSurfaceVariant,
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: context.accentColor,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.notifications_off_outlined,
+              size: 32,
+              color: AppColors.primary,
+            ),
           ),
-          AppSpacing.verticalMd,
+          const SizedBox(height: AppSpacing.md),
           Text(
-            '알림이 없습니다',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+            '알림이 없어요',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: context.textPrimary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '새로운 알림이 오면 여기에 표시돼요',
+            style: TextStyle(
+              fontSize: 14,
+              color: context.mutedForegroundColor,
+            ),
           ),
         ],
       ),
@@ -136,82 +185,102 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 }
 
-class _NotificationTile extends StatelessWidget {
+class _NotificationCard extends StatelessWidget {
   final AppNotification notification;
   final VoidCallback onTap;
 
-  const _NotificationTile({
+  const _NotificationCard({
     required this.notification,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: notification.isRead
-            ? colorScheme.surfaceContainerHighest
-            : colorScheme.primaryContainer,
-        child: Icon(
-          _getIcon(),
-          color: notification.isRead
-              ? colorScheme.onSurfaceVariant
-              : colorScheme.primary,
-        ),
-      ),
-      title: Text(
-        notification.title ?? notification.typeDisplayName,
-        style: TextStyle(
-          fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
-        ),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (notification.body != null)
-            Text(
-              notification.body!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          AppSpacing.verticalXxs,
-          Text(
-            notification.formattedDate ?? _formatDate(notification.createdAt),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-          ),
-        ],
-      ),
-      trailing: !notification.isRead
-          ? Container(
-              width: AppSpacing.xs,
-              height: AppSpacing.xs,
-              decoration: BoxDecoration(
-                color: colorScheme.primary,
-                shape: BoxShape.circle,
-              ),
-            )
-          : null,
+    return GestureDetector(
       onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: notification.isRead
+              ? context.cardColor
+              : AppColors.primary.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: context.borderColor, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: context.shadowColor,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _NotificationIcon(notification: notification),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          notification.title ?? notification.typeDisplayName,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: notification.isRead
+                                ? FontWeight.w500
+                                : FontWeight.w700,
+                            color: context.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (!notification.isRead) ...[
+                        const SizedBox(width: AppSpacing.xs),
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (notification.body != null) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      notification.body!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: context.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 4),
+                  Text(
+                    notification.formattedDate ??
+                        _formatDate(notification.createdAt),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: context.mutedForegroundColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
-  }
-
-  IconData _getIcon() {
-    switch (notification.type) {
-      case 'broadcast':
-        return Icons.campaign;
-      case 'message':
-        return Icons.message;
-      case 'reply':
-        return Icons.reply;
-      case 'system':
-        return Icons.info_outline;
-      default:
-        return Icons.notifications;
-    }
   }
 
   String _formatDate(DateTime date) {
@@ -227,5 +296,65 @@ class _NotificationTile extends StatelessWidget {
     } else {
       return '방금 전';
     }
+  }
+}
+
+class _NotificationIcon extends StatelessWidget {
+  final AppNotification notification;
+
+  const _NotificationIcon({required this.notification});
+
+  IconData _getIcon() {
+    switch (notification.type) {
+      case 'broadcast':
+        return Icons.campaign_rounded;
+      case 'message':
+        return Icons.chat_bubble_rounded;
+      case 'reply':
+        return Icons.reply_rounded;
+      case 'system':
+        return Icons.info_rounded;
+      default:
+        return Icons.notifications_rounded;
+    }
+  }
+
+  Color _getIconColor(BuildContext context) {
+    switch (notification.type) {
+      case 'broadcast':
+      case 'message':
+      case 'reply':
+        return AppColors.primary;
+      default:
+        return context.mutedForegroundColor;
+    }
+  }
+
+  Color _getIconBg(BuildContext context) {
+    switch (notification.type) {
+      case 'broadcast':
+      case 'message':
+      case 'reply':
+        return AppColors.primary.withValues(alpha: 0.10);
+      default:
+        return context.accentColor;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: _getIconBg(context),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        _getIcon(),
+        size: 18,
+        color: _getIconColor(context),
+      ),
+    );
   }
 }

@@ -24,6 +24,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthRequestCodeRequested>(_onRequestCodeRequested);
     on<AuthVerifyCodeRequested>(_onVerifyCodeRequested);
+    on<AuthDevBypassVerificationRequested>(_onDevBypassVerificationRequested);
     on<AuthUserUpdated>(_onUserUpdated);
   }
 
@@ -101,6 +102,33 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.copyWith(
         status: AuthStatus.error,
         errorMessage: _getFirebaseErrorMessage(e),
+      ));
+    }
+  }
+
+  /// Dev bypass: Firebase 없이 서버에 직접 인증 처리
+  Future<void> _onDevBypassVerificationRequested(
+    AuthDevBypassVerificationRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(state.copyWith(status: AuthStatus.loading, clearError: true));
+
+    try {
+      // verificationId를 빈 문자열로 전달 → repository가 서버 직접 호출
+      await _authRepository.verifyCode(
+        event.phoneNumber,
+        '111111',
+        '', // empty verificationId = bypass Firebase
+      );
+      emit(state.copyWith(
+        status: AuthStatus.unauthenticated,
+        phoneNumber: event.phoneNumber,
+        isCodeVerified: true,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: _getErrorMessage(e),
       ));
     }
   }

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:talk_flutter/core/utils/error_utils.dart';
 import 'package:talk_flutter/domain/entities/conversation.dart';
 import 'package:talk_flutter/domain/entities/message.dart';
 import 'package:talk_flutter/domain/repositories/conversation_repository.dart';
@@ -167,7 +168,7 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     } catch (e) {
       emit(state.copyWith(
         status: ConversationStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: getUserFriendlyErrorMessage(e),
       ));
     }
   }
@@ -194,7 +195,7 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     } catch (e) {
       emit(state.copyWith(
         status: ConversationStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: getUserFriendlyErrorMessage(e),
       ));
     }
   }
@@ -222,7 +223,7 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     } catch (e) {
       emit(state.copyWith(
         status: ConversationStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: getUserFriendlyErrorMessage(e),
       ));
     }
   }
@@ -265,7 +266,7 @@ class ConversationBloc extends Bloc<ConversationEvent, ConversationState> {
     } catch (e) {
       emit(state.copyWith(
         status: ConversationStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: getUserFriendlyErrorMessage(e),
       ));
     }
   }

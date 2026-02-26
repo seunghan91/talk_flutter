@@ -24,6 +24,8 @@ class UserModel {
   final bool? messagePushEnabled;
   @JsonKey(name: 'wallet_balance')
   final int? walletBalance;
+  @JsonKey(name: 'nickname_changed_at')
+  final String? nicknameChangedAt;
   @JsonKey(name: 'created_at')
   final String? createdAt;
   @JsonKey(name: 'updated_at')
@@ -41,6 +43,7 @@ class UserModel {
     this.broadcastPushEnabled,
     this.messagePushEnabled,
     this.walletBalance,
+    this.nicknameChangedAt,
     this.createdAt,
     this.updatedAt,
   });
@@ -64,6 +67,7 @@ class UserModel {
       broadcastPushEnabled: broadcastPushEnabled ?? true,
       messagePushEnabled: messagePushEnabled ?? true,
       walletBalance: walletBalance,
+      nicknameChangedAt: _parseDateTime(nicknameChangedAt),
       createdAt: _parseDateTime(createdAt) ?? DateTime.now(),
       updatedAt: _parseDateTime(updatedAt),
     );
@@ -83,6 +87,7 @@ class UserModel {
       broadcastPushEnabled: user.broadcastPushEnabled,
       messagePushEnabled: user.messagePushEnabled,
       walletBalance: user.walletBalance,
+      nicknameChangedAt: user.nicknameChangedAt?.toIso8601String(),
       createdAt: user.createdAt.toIso8601String(),
       updatedAt: user.updatedAt?.toIso8601String(),
     );
