@@ -4,7 +4,7 @@ EXPORT_OPTIONS  = ios/ExportOptions.plist
 API_KEY         = BS4SD32G2U
 API_ISSUER      = 213dd70a-f512-449a-b36f-86655445cec4
 IPA_DIR         = build/ios/ipa
-IPA_FILE        = $(IPA_DIR)/Talkk.ipa
+IPA_FILE        = $(IPA_DIR)/Voiceting.ipa
 
 build-ipa:
 	flutter build ipa --release --export-options-plist=$(EXPORT_OPTIONS)
