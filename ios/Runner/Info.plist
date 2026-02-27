@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<!-- 앱 이름: 홈 화면/앱서랍에 표시되는 이름 (한글 사용자용) -->
+	<!-- 영문명: Voiceting | 한글명: 보이스팅 -->
 	<key>CFBundleDisplayName</key>
 	<string>보이스팅</string>
 	<key>CFBundleExecutable</key>
@@ -12,6 +14,7 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<!-- 번들 내부 식별명 (영문) - App Store Connect, Xcode에서 사용 -->
 	<key>CFBundleName</key>
 	<string>Voiceting</string>
 	<key>CFBundlePackageType</key>

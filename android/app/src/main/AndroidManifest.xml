@@ -23,6 +23,7 @@
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
 
+    <!-- 앱 이름: 영문명 Voiceting | 한글명 보이스팅 -->
     <application
         android:label="보이스팅"
         android:name="${applicationName}"
