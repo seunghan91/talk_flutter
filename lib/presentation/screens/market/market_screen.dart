@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:talk_flutter/core/theme/theme.dart';
 import 'package:talk_flutter/presentation/blocs/broadcast/broadcast_bloc.dart';
+import 'package:talk_flutter/presentation/widgets/coin_charge_sheet.dart';
 
 /// Market screen with message purchase - 보이스팅 디자인 시스템
 class MarketScreen extends StatelessWidget {
@@ -285,12 +286,7 @@ class _PurchaseCard extends StatelessWidget {
             width: double.infinity,
             height: 52,
             child: FilledButton(
-              onPressed: () {
-                // TODO: 결제 처리 - WalletBloc 연동
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('결제 기능은 준비 중입니다.')),
-                );
-              },
+              onPressed: () => showCoinChargeSheet(context),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

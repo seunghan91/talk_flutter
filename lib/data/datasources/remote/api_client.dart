@@ -157,6 +157,15 @@ abstract class ApiClient {
   @POST('/wallets/deposit')
   Future<HttpResponse<dynamic>> depositToWallet(@Body() Map<String, dynamic> body);
 
+
+  // ============ Payments ============
+
+  @GET('/api/v1/payment_products')
+  Future<HttpResponse<dynamic>> getPaymentProducts();
+
+  @POST('/api/v1/payments')
+  Future<HttpResponse<dynamic>> createPayment(@Body() Map<String, dynamic> body);
+
   // ============ Reports ============
 
   @POST('/reports')

@@ -15,6 +15,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
     on<WalletTransactionsRequested>(_onTransactionsRequested);
     on<WalletDepositRequested>(_onDepositRequested);
     on<WalletCleared>(_onCleared);
+    on<WalletIapPurchaseRequested>(_onIapPurchaseRequested);
   }
 
   Future<void> _onWalletRequested(
@@ -90,6 +91,43 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
       emit(state.copyWith(
         status: WalletStatus.error,
         errorMessage: '충전에 실패했습니다.',
+      ));
+    }
+  }
+
+
+  Future<void> _onIapPurchaseRequested(
+    WalletIapPurchaseRequested event,
+    Emitter<WalletState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(status: WalletStatus.purchasing));
+
+      final result = await _walletRepository.purchaseIap(
+        productId: event.productId,
+        platform: event.platform,
+        receiptData: event.receiptData,
+        purchaseToken: event.purchaseToken,
+        transactionId: event.transactionId,
+      );
+
+      if (result.success) {
+        final wallet = await _walletRepository.getWallet();
+        emit(state.copyWith(
+          status: WalletStatus.loaded,
+          wallet: wallet,
+          successMessage: result.message,
+        ));
+      } else {
+        emit(state.copyWith(
+          status: WalletStatus.error,
+          errorMessage: result.message,
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        status: WalletStatus.error,
+        errorMessage: '결제 처리에 실패했습니다.',
       ));
     }
   }

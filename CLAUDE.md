@@ -270,3 +270,11 @@ BoxDecoration(
 - [ ] 오프라인 모드 데이터 동기화 강화 (Drift 캐싱)
 - [ ] 통합 테스트 및 위젯 테스트 커버리지 확대
 - [ ] iOS/Android 최종 빌드 및 스토어 배포 준비
+- [ ] 결제 시스템 (IAP) 프론트엔드 연동 (market_screen, coin_charge_sheet)
+
+### ✅ 백엔드 구현 완료 (2026-03-06)
+- [x] conversations#close — `active: false` 처리
+- [x] conversations#unread_count — 안 읽은 메시지 수 API
+- [x] wallets#transfer — 사용자 간 코인 이체 (트랜잭션 보장)
+- [x] payments_controller.rb — IAP 영수증 검증 + 코인 지급 (iOS 구현, Android stub)
+- [x] FCM UNREGISTERED 토큰 자동 DB 삭제

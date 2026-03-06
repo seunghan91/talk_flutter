@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:talk_flutter/domain/entities/wallet.dart';
 
 /// Wallet state status
-enum WalletStatus { initial, loading, loaded, depositing, error }
+enum WalletStatus { initial, loading, loaded, depositing, purchasing, error }
 
 /// Wallet state
 class WalletState extends Equatable {
@@ -22,6 +22,7 @@ class WalletState extends Equatable {
 
   bool get isLoading => status == WalletStatus.loading;
   bool get isDepositing => status == WalletStatus.depositing;
+  bool get isPurchasing => status == WalletStatus.purchasing;
   bool get hasError => errorMessage != null;
   bool get hasWallet => wallet != null;
 

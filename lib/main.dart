@@ -34,6 +34,7 @@ import 'package:talk_flutter/domain/repositories/conversation_repository.dart';
 import 'package:talk_flutter/domain/repositories/feedback_repository.dart';
 import 'package:talk_flutter/domain/repositories/notification_repository.dart';
 import 'package:talk_flutter/domain/repositories/user_repository.dart';
+import 'package:talk_flutter/core/services/iap_service.dart';
 import 'package:talk_flutter/domain/repositories/wallet_repository.dart';
 import 'package:talk_flutter/presentation/blocs/auth/auth_bloc.dart';
 import 'package:talk_flutter/presentation/blocs/broadcast/broadcast_bloc.dart';
@@ -100,6 +101,9 @@ void main() async {
 
   // Initialize BLoC observer for debugging
   Bloc.observer = AppBlocObserver();
+
+  // Initialize IAP service
+  await IapService().initialize();
 
   // Initialize dependencies
   final secureStorage = SecureStorageDatasource();

@@ -13,6 +13,15 @@ abstract class WalletRepository {
     required double amount,
     String? paymentMethod,
   });
+
+  /// IAP 영수증을 서버에 전달하고 코인을 지급받음
+  Future<IapPurchaseResult> purchaseIap({
+    required String productId,
+    required String platform,
+    String? receiptData,
+    String? purchaseToken,
+    String? transactionId,
+  });
 }
 
 /// Deposit result
@@ -29,3 +38,18 @@ class DepositResult {
     this.transaction,
   });
 }
+/// IAP 구매 후 서버에 영수증 전달하여 코인 지급받는 결과
+class IapPurchaseResult {
+  final bool success;
+  final String message;
+  final int balance;
+  final int coinsAdded;
+
+  const IapPurchaseResult({
+    required this.success,
+    required this.message,
+    required this.balance,
+    this.coinsAdded = 0,
+  });
+}
+

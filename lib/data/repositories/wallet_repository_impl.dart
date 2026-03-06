@@ -59,6 +59,34 @@ class WalletRepositoryImpl implements WalletRepository {
     );
   }
 
+
+  @override
+  Future<IapPurchaseResult> purchaseIap({
+    required String productId,
+    required String platform,
+    String? receiptData,
+    String? purchaseToken,
+    String? transactionId,
+  }) async {
+    final body = <String, dynamic>{
+      'product_id': productId,
+      'platform': platform,
+      if (receiptData != null) 'receipt_data': receiptData,
+      if (purchaseToken != null) 'receipt_data': purchaseToken,
+      if (transactionId != null) 'transaction_id': transactionId,
+    };
+
+    final response = await _apiClient.createPayment(body);
+    final data = response.data as Map<String, dynamic>? ?? {};
+
+    return IapPurchaseResult(
+      success: data['success'] as bool? ?? false,
+      message: data['message'] as String? ?? '',
+      balance: data['balance'] as int? ?? 0,
+      coinsAdded: data['coins_added'] as int? ?? 0,
+    );
+  }
+
   /// Parse transaction data from API response
   WalletTransaction _parseTransaction(Map<String, dynamic> data) {
     return WalletTransaction(

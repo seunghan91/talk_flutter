@@ -64,6 +64,9 @@ dependencies:
   # ============ Notifications ============
   flutter_local_notifications: ^18.0.1
 
+  # ============ In-App Purchase ============
+  in_app_purchase: ^3.2.0
+
   # ============ Utilities ============
   logger: ^2.0.0
   intl: ^0.20.2
